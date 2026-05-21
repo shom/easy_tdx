@@ -8,7 +8,7 @@
 
 from pathlib import Path
 
-from xmtdx.offline import detect_tdx_home, read_gbbq
+from easy_tdx.offline import detect_tdx_home, read_gbbq
 
 home = detect_tdx_home()
 if home is None:

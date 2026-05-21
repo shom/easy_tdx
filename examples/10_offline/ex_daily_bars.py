@@ -8,7 +8,7 @@
 
 from pathlib import Path
 
-from xmtdx.offline import detect_tdx_home, read_ex_daily_bars
+from easy_tdx.offline import detect_tdx_home, read_ex_daily_bars
 
 home = detect_tdx_home()
 if home is None:

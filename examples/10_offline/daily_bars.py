@@ -7,8 +7,8 @@
 需要本地已安装通达信并下载过日线数据。
 """
 
-from xmtdx.offline import detect_tdx_home, read_daily_bars, find_daily_bar_file
-from xmtdx import Market
+from easy_tdx.offline import detect_tdx_home, read_daily_bars, find_daily_bar_file
+from easy_tdx import Market
 
 home = detect_tdx_home()
 if home is None:

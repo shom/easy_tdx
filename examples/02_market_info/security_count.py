@@ -1,6 +1,6 @@
 """演示：获取市场证券总数。"""
 
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     sh_count = c.get_security_count(Market.SH)

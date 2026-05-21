@@ -4,7 +4,7 @@
 """
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     stocks = c.get_security_list(Market.SH, start=0)

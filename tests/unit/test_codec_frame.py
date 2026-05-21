@@ -3,7 +3,7 @@
 import struct
 import zlib
 
-from xmtdx.codec.frame import HEADER_SIZE, decompress_body, parse_header
+from easy_tdx.codec.frame import HEADER_SIZE, decompress_body, parse_header
 
 
 def _make_header(zipsize: int, unzipsize: int) -> bytes:

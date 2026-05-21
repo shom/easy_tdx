@@ -1,7 +1,7 @@
 """演示：获取历史逐笔成交数据。date 参数为 YYYYMMDD 格式的整数。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     date = 20250110

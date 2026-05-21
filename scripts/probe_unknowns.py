@@ -2,7 +2,7 @@
 
 import sys
 
-from xmtdx import Market, TdxClient
+from easy_tdx import Market, TdxClient
 
 
 def probe_minute_averages(client, market, code):

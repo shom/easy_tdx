@@ -1,7 +1,7 @@
 """演示：获取今日分时数据（240 条）。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     bars = c.get_minute_time_data(Market.SH, "600000")

@@ -1,7 +1,7 @@
 """演示：获取个股历史日线资金流向序列。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     flows = c.get_history_fund_flow(Market.SH, "600519", 0, 10)

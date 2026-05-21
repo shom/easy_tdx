@@ -11,7 +11,11 @@
       "Bash(git push *)",
       "mcp__zread__get_repo_structure",
       "Bash(pip install *)",
-      "mcp__web-reader__webReader"
+      "mcp__web-reader__webReader",
+      "Bash(python3 *)",
+      "Bash(where mypy *)",
+      "Bash(pip list *)",
+      "Bash(uv run *)"
     ]
   }
 }

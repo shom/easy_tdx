@@ -6,7 +6,7 @@ K 线类别:
 """
 
 import pandas as pd
-from xmtdx import TdxClient, Market, KlineCategory
+from easy_tdx import TdxClient, Market, KlineCategory
 
 with TdxClient.from_best_host() as c:
     bars = c.get_security_bars(Market.SZ, "002176", KlineCategory.DAY, 0, 100)

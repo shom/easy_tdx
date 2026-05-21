@@ -8,7 +8,7 @@
 需要本地已安装通达信并下载过分钟数据。
 """
 
-from xmtdx.offline import (
+from easy_tdx.offline import (
     detect_tdx_home,
     read_5min_bars,
     read_lc_min_bars,
@@ -16,7 +16,7 @@ from xmtdx.offline import (
     find_lc1_bar_file,
     find_lc5_bar_file,
 )
-from xmtdx import Market
+from easy_tdx import Market
 
 home = detect_tdx_home()
 if home is None:

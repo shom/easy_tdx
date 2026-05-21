@@ -1,8 +1,8 @@
-"""xmtdx 异常层次"""
+"""easy-tdx 异常层次"""
 
 
 class TdxError(Exception):
-    """所有 xmtdx 异常的基类"""
+    """所有 easy-tdx 异常的基类"""
 
 
 class TdxConnectionError(TdxError):

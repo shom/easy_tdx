@@ -22,7 +22,7 @@ ruff format --check src/ tests/
 ## 架构
 
 ```
-src/xmtdx/
+src/easy_tdx/
 ├── client.py          # TdxClient / AsyncTdxClient（高层 API）
 ├── transport/
 │   ├── sync.py        # TdxConnection（socket）+ ping_host / ping_all

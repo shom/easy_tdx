@@ -7,7 +7,7 @@
 """
 
 import pandas as pd
-from xmtdx import TdxClient, Market, KlineCategory
+from easy_tdx import TdxClient, Market, KlineCategory
 
 with TdxClient.from_best_host() as c:
     bars = c.get_index_bars(Market.SH, "999999", KlineCategory.DAY, 0, 10)

@@ -7,7 +7,7 @@
 """
 
 import pandas as pd
-from xmtdx import TdxClient
+from easy_tdx import TdxClient
 
 with TdxClient.from_best_host() as c:
     blocks = c.get_block_info("block_gn.dat")

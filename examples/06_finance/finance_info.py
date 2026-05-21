@@ -1,7 +1,7 @@
 """演示：获取最新财务数据。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     info = c.get_finance_info(Market.SH, "600519")

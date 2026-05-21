@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "xmtdx"
-version = "0.1.1"
-description = "通达信 TCP 协议 A 股行情数据客户端"
+name = "easy-tdx"
+version = "1.0.0"
+description = "通达信 TCP 协议行情数据客户端，支持在线行情与离线本地数据读取"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["tzdata>=2024.1"]
@@ -15,7 +15,7 @@ dev = ["pytest>=8.0", "pytest-cov", "mypy>=1.9", "ruff>=0.4"]
 pandas = ["pandas>=2.0"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/xmtdx"]
+packages = ["src/easy_tdx"]
 
 [tool.mypy]
 strict = true

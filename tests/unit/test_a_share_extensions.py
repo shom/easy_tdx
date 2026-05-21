@@ -4,17 +4,17 @@ import asyncio
 import struct
 from unittest.mock import patch
 
-from xmtdx import AsyncTdxClient, Market, TdxClient
-from xmtdx.client import _classify_fund_flow
-from xmtdx.models.bar import SecurityBar
-from xmtdx.models.quote import SecurityQuote
-from xmtdx.models.security import SecurityInfo
-from xmtdx.models.stats import HistoricalFundFlow
-from xmtdx.models.timeseries import MinuteBar
-from xmtdx.models.timeseries import TransactionRecord
+from easy_tdx import AsyncTdxClient, Market, TdxClient
+from easy_tdx.client import _classify_fund_flow
+from easy_tdx.models.bar import SecurityBar
+from easy_tdx.models.quote import SecurityQuote
+from easy_tdx.models.security import SecurityInfo
+from easy_tdx.models.stats import HistoricalFundFlow
+from easy_tdx.models.timeseries import MinuteBar
+from easy_tdx.models.timeseries import TransactionRecord
 
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_fund_flow_logic(_mock_conn_cls):
     """测试资金流分类计算逻辑。"""
     client = TdxClient("127.0.0.1")
@@ -48,7 +48,7 @@ def test_classify_fund_flow_exact_thresholds_use_lower_bucket():
     assert flow.medium_in == 200000.0
     assert flow.small_in == 40000.0
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_security_list_all_filtering(_mock_conn_cls):
     """测试三市 A 股过滤与行业挂载逻辑。"""
     client = TdxClient("127.0.0.1")
@@ -84,7 +84,7 @@ def test_get_security_list_all_filtering(_mock_conn_cls):
         s0 = next(s for s in all_stocks if s.code == "600000")
         assert s0.industry_tdx == "T01"
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_market_stat_mapping(_mock_conn_cls):
     """测试市场统计字段映射。"""
     client = TdxClient("127.0.0.1")
@@ -114,7 +114,7 @@ def test_get_market_stat_mapping(_mock_conn_cls):
 
 def test_get_history_fund_flow_parsing():
     """测试历史资金流序列解析逻辑。"""
-    from xmtdx.commands.fund_flow import GetHistoryFundFlowCmd
+    from easy_tdx.commands.fund_flow import GetHistoryFundFlowCmd
     
     # 模拟 Category 22 响应 (Header 9 + Count 2 + Body 36)
     body = bytearray(9)
@@ -136,7 +136,7 @@ def test_get_history_fund_flow_parsing():
     assert res[0].day == 8
 
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_history_fund_flow_fallback(_mock_conn_cls):
     """Category 22 空回包时，自动回退到历史逐笔重算。"""
     client = TdxClient("127.0.0.1")
@@ -197,7 +197,7 @@ def test_get_history_fund_flow_fallback(_mock_conn_cls):
     ]
 
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_price_limits_uses_listing_window(_mock_conn_cls):
     """client.get_price_limits 应结合日 K 条数判断上市初期限价窗口。"""
     client = TdxClient("127.0.0.1")
@@ -223,13 +223,13 @@ def test_get_price_limits_uses_listing_window(_mock_conn_cls):
         )
 
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_minute_time_data_prefers_history_endpoint(_mock_conn_cls):
     """今日分时优先走历史分时接口，规避当前分时协议歧义。"""
     client = TdxClient("127.0.0.1")
     expected = [MinuteBar(price=9.7, vol=13694)]
 
-    with patch("xmtdx.client._today_in_shanghai", return_value=20260422), patch.object(
+    with patch("easy_tdx.client._today_in_shanghai", return_value=20260422), patch.object(
         TdxClient,
         "get_history_minute_time_data",
         return_value=expected,
@@ -244,13 +244,13 @@ def test_get_minute_time_data_prefers_history_endpoint(_mock_conn_cls):
     assert result == expected
 
 
-@patch("xmtdx.client.TdxConnection")
+@patch("easy_tdx.client.TdxConnection")
 def test_get_minute_time_data_falls_back_to_current_endpoint(_mock_conn_cls):
     """历史分时失败时，仍回退到原今日分时命令。"""
     client = TdxClient("127.0.0.1")
     fallback = [MinuteBar(price=9.61, vol=10698)]
 
-    with patch("xmtdx.client._today_in_shanghai", return_value=20260422), patch.object(
+    with patch("easy_tdx.client._today_in_shanghai", return_value=20260422), patch.object(
         TdxClient,
         "get_history_minute_time_data",
         side_effect=RuntimeError("history unavailable"),
@@ -271,9 +271,9 @@ def test_async_get_minute_time_data_prefers_history_endpoint():
     expected = [MinuteBar(price=9.7, vol=13694)]
 
     async def run_test() -> None:
-        with patch("xmtdx.client.AsyncTdxConnection"):
+        with patch("easy_tdx.client.AsyncTdxConnection"):
             client = AsyncTdxClient("127.0.0.1")
-            with patch("xmtdx.client._today_in_shanghai", return_value=20260422), patch.object(
+            with patch("easy_tdx.client._today_in_shanghai", return_value=20260422), patch.object(
                 AsyncTdxClient,
                 "get_history_minute_time_data",
                 return_value=expected,

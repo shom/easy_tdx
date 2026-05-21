@@ -4,7 +4,7 @@
 """
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     flow = c.get_fund_flow(Market.SH, "600519")

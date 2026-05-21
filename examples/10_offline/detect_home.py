@@ -18,9 +18,9 @@ vipdoc 目录结构:
 import os
 from pathlib import Path
 
-from xmtdx.offline import detect_tdx_home, resolve_vipdoc
-from xmtdx.offline import find_daily_bar_file, find_5min_bar_file, find_lc1_bar_file
-from xmtdx import Market
+from easy_tdx.offline import detect_tdx_home, resolve_vipdoc
+from easy_tdx.offline import find_daily_bar_file, find_5min_bar_file, find_lc1_bar_file
+from easy_tdx import Market
 
 # --- 检测安装目录 ---
 print("=" * 60)

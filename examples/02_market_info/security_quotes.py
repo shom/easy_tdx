@@ -1,7 +1,7 @@
 """演示：批量获取实时五档行情。最多支持 80 只/次。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     stocks = [

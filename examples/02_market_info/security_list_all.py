@@ -6,7 +6,7 @@
 
 import logging
 import pandas as pd
-from xmtdx import TdxClient
+from easy_tdx import TdxClient
 
 # 启用日志，查看分页进度
 logging.basicConfig(level=logging.INFO, format="%(message)s")

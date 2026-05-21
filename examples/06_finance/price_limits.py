@@ -1,7 +1,7 @@
 """演示：计算个股涨跌停价格。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 CODE = "600519"
 NAME = "贵州茅台"

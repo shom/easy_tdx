@@ -1,7 +1,7 @@
 """演示：异步客户端连接与基本用法。"""
 
 import asyncio
-from xmtdx import AsyncTdxClient, Market, KlineCategory
+from easy_tdx import AsyncTdxClient, Market, KlineCategory
 
 
 async def main():

@@ -16,7 +16,7 @@
 
 from pathlib import Path
 
-from xmtdx import CALC_HOSTS, TdxClient
+from easy_tdx import CALC_HOSTS, TdxClient
 
 OUTPUT_DIR = Path(__file__).parent / "downloads"
 

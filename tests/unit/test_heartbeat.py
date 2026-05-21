@@ -3,13 +3,13 @@
 import asyncio
 from unittest.mock import AsyncMock, patch
 
-from xmtdx import AsyncTdxClient
+from easy_tdx import AsyncTdxClient
 
 
 def test_heartbeat_sends_periodically():
     async def run_test():
         # 模拟连接和执行
-        with patch("xmtdx.client.AsyncTdxConnection") as mock_conn_cls:
+        with patch("easy_tdx.client.AsyncTdxConnection") as mock_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.connect = AsyncMock()
             mock_conn.close = AsyncMock()
@@ -40,7 +40,7 @@ def test_heartbeat_sends_periodically():
 
 def test_heartbeat_stops_on_close():
     async def run_test():
-        with patch("xmtdx.client.AsyncTdxConnection") as mock_conn_cls:
+        with patch("easy_tdx.client.AsyncTdxConnection") as mock_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.connect = AsyncMock()
             mock_conn.close = AsyncMock()

@@ -1,7 +1,7 @@
 """演示：获取除权除息历史记录。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market, XDXR_CATEGORY_NAMES
+from easy_tdx import TdxClient, Market, XDXR_CATEGORY_NAMES
 
 with TdxClient.from_best_host() as c:
     records = c.get_xdxr_info(Market.SH, "600519")

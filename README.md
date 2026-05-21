@@ -1,10 +1,17 @@
-# xmtdx
+# easy-tdx
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 通达信 TCP 协议行情数据客户端，零运行时依赖。支持在线行情获取和离线本地数据读取。
 
-pytdx 年久失修：多处已知解析 bug、Python 2 包袱、无类型注解、大量未知字段被静默丢弃。xmtdx 重新实现协议，修复已知 bug，保留全部原始字节与未知字段供后续逆向分析。
+easy-tdx 是从 [xmtdx](https://github.com/minionszyw/xmtdx) 项目独立出来的全新版本，在线协议实现经过大幅重写并修复了大量解析 bug，同时新增了扩展行情、离线数据读取、专业财务数据等完整功能模块。
 
-离线数据读取模块借鉴了 [pytdx](https://github.com/rainx/pytdx) 的数据格式解析方法，感谢 pytdx 项目的贡献。
+本项目深受以下开源项目启发，感谢它们的贡献：
+
+- [pytdx](https://github.com/rainx/pytdx) — 离线数据读取模块（日线、分钟线、板块、股本变迁、历史财务的文件格式解析方法）借鉴自 pytdx
+- [xmtdx](https://github.com/minionszyw/xmtdx) — 初始项目结构和在线协议实现的原型
+
+详见 [NOTICE](NOTICE) 和 [LICENSE](LICENSE) 文件。
 
 ## 特性
 
@@ -32,7 +39,7 @@ pip install -e ".[pandas]"        # 含 pandas（可选）
 ### 连接与基本查询
 
 ```python
-from xmtdx import TdxClient, Market, KlineCategory
+from easy_tdx import TdxClient, Market, KlineCategory
 
 # 手动指定服务器
 with TdxClient("180.153.18.170") as c:
@@ -52,7 +59,7 @@ with TdxClient.from_best_host() as c:
 
 ```python
 import asyncio
-from xmtdx import AsyncTdxClient, Market, KlineCategory
+from easy_tdx import AsyncTdxClient, Market, KlineCategory
 
 async def main():
     async with AsyncTdxClient.from_best_host() as c:
@@ -70,7 +77,7 @@ asyncio.run(main())
 ### 服务器测速
 
 ```python
-from xmtdx import TdxClient
+from easy_tdx import TdxClient
 
 # 测速并排序
 results = TdxClient.ping_all()
@@ -122,7 +129,7 @@ with TdxClient.from_best_host() as c:
 ### K 线数据
 
 ```python
-from xmtdx import Market, KlineCategory
+from easy_tdx import Market, KlineCategory
 
 with TdxClient.from_best_host() as c:
     # 个股 K 线
@@ -170,7 +177,7 @@ with TdxClient.from_best_host() as c:
 ### 财务与公司信息
 
 ```python
-from xmtdx import XDXR_CATEGORY_NAMES
+from easy_tdx import XDXR_CATEGORY_NAMES
 
 with TdxClient.from_best_host() as c:
     # 除权除息历史
@@ -227,7 +234,7 @@ with TdxClient.from_best_host() as c:
 ### 文件下载
 
 ```python
-from xmtdx import CALC_HOSTS
+from easy_tdx import CALC_HOSTS
 
 with TdxClient.from_best_host() as c:
     # 行情服务器可用的文件
@@ -247,7 +254,7 @@ with TdxClient.from_best_host() as c:
 ### 扩展行情（期货、港股、外盘）
 
 ```python
-from xmtdx import ExTdxClient
+from easy_tdx import ExTdxClient
 
 # 扩展行情服务器端口 7727
 with ExTdxClient() as c:
@@ -285,8 +292,8 @@ export TDX_HOME=/opt/new_tdx
 ### 日线 K 线
 
 ```python
-from xmtdx.offline import detect_tdx_home, read_daily_bars, find_daily_bar_file
-from xmtdx import Market
+from easy_tdx.offline import detect_tdx_home, read_daily_bars, find_daily_bar_file
+from easy_tdx import Market
 
 home = detect_tdx_home()
 
@@ -304,11 +311,11 @@ for bar in bars[-10:]:
 ### 分钟 K 线
 
 ```python
-from xmtdx.offline import (
+from easy_tdx.offline import (
     read_5min_bars, read_lc_min_bars,
     find_5min_bar_file, find_lc1_bar_file, find_lc5_bar_file,
 )
-from xmtdx import Market
+from easy_tdx import Market
 
 # .5 文件（OHLC 为整数 / 100）
 filepath = find_5min_bar_file(Market.SH, "600000")
@@ -328,7 +335,7 @@ bars = read_lc_min_bars(filepath)
 ### 扩展市场日线
 
 ```python
-from xmtdx.offline import read_ex_daily_bars
+from easy_tdx.offline import read_ex_daily_bars
 
 # 期货、港股、外盘等扩展市场数据
 # 文件位于 vipdoc/ds/lday/，如 29#A1801.day
@@ -339,7 +346,7 @@ bars = read_ex_daily_bars(r"C:\new_jyplug\vipdoc\ds\lday\38#2_CPI.day")
 ### 板块数据
 
 ```python
-from xmtdx.offline import read_block_dat, read_customer_blocks
+from easy_tdx.offline import read_block_dat, read_customer_blocks
 
 # 系统板块（本地 .dat 文件）
 blocks = read_block_dat(r"C:\new_jyplug\vipdoc\block_zs.dat")
@@ -355,7 +362,7 @@ blocks = read_customer_blocks(r"C:\new_jyplug\T0002\blocknew")
 ### 股本变迁
 
 ```python
-from xmtdx.offline import read_gbbq
+from easy_tdx.offline import read_gbbq
 
 records = read_gbbq(r"C:\new_jyplug\T0002\hq_cache\gbbq")
 # records[0].market / .code / .datetime / .category / .hongli_panqianliutong / ...
@@ -366,7 +373,7 @@ gbbq 文件使用 XOR 加密存储，读取时自动解密。
 ### 历史财务数据
 
 ```python
-from xmtdx.offline import read_history_financial
+from easy_tdx.offline import read_history_financial
 
 # 支持 .dat 和 .zip 文件（.zip 自动解压）
 records = read_history_financial(r"C:\new_jyplug\vipdoc\fin\gpcw20260331.zip")
@@ -378,7 +385,7 @@ records = read_history_financial(r"C:\new_jyplug\vipdoc\fin\gpcw20260331.zip")
 ### 路径检测
 
 ```python
-from xmtdx.offline import detect_tdx_home, resolve_vipdoc
+from easy_tdx.offline import detect_tdx_home, resolve_vipdoc
 
 # 自动检测通达信安装目录
 home = detect_tdx_home()
@@ -445,7 +452,7 @@ vipdoc/
 | `get_transaction_data(market, code, start, count)` | 逐笔成交 |
 | `get_history_transaction_data(market, code, date, start, count)` | 历史逐笔 |
 
-### xmtdx.offline
+### easy_tdx.offline
 
 | 函数 | 说明 |
 |------|------|
@@ -577,7 +584,7 @@ name  category  count  codes
 ## 架构
 
 ```
-src/xmtdx/
+src/easy_tdx/
 ├── client.py          # TdxClient / AsyncTdxClient（高层 API）
 ├── ex/
 │   ├── client.py      # ExTdxClient / AsyncExTdxClient（扩展行情）
@@ -630,5 +637,6 @@ ruff format --check src/ tests/
 
 ## 致谢
 
-- [pytdx](https://github.com/rainx/pytdx) — 离线数据读取模块（日线、分钟线、板块、股本变迁、历史财务的文件格式解析方法）借鉴自 pytdx 项目，感谢 rainx 及所有贡献者的工作
+- [pytdx](https://github.com/rainx/pytdx) — 离线数据读取模块（日线、分钟线、板块、股本变迁、历史财务的文件格式解析方法）借鉴自 pytdx 项目，感谢 rainx 及所有贡献者
+- [xmtdx](https://github.com/minionszyw/xmtdx) — 本项目的初始原型，感谢 minionszyw 的工作
 - 通达信协议分析离不开开源社区的逆向工程成果

@@ -136,7 +136,7 @@ def _historical_fund_flow_from_records(
 # 同步客户端
 # ============================================================
 
-_CACHE_DIR = Path.home() / ".xmtdx" / "cache"
+_CACHE_DIR = Path.home() / ".easy_tdx" / "cache"
 _CACHE_MAX_AGE = 86400  # 1 天
 
 

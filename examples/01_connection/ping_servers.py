@@ -1,7 +1,7 @@
 """演示：测量多台通达信服务器延迟并排序。"""
 
 import pandas as pd
-from xmtdx import TdxClient
+from easy_tdx import TdxClient
 
 results = TdxClient.ping_all()
 df = pd.DataFrame(results, columns=["服务器", "延迟(s)"])

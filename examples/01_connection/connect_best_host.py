@@ -1,6 +1,6 @@
 """演示：自动从候选服务器中选延迟最低的建立连接。"""
 
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 # 方式一：手动指定服务器
 with TdxClient("180.153.18.170") as c:

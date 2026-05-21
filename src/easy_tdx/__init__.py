@@ -1,8 +1,8 @@
-"""xmtdx — 通达信 TCP 协议 A 股行情数据客户端。
+"""easy_tdx — 通达信 TCP 协议 A 股行情数据客户端。
 
 快速开始::
 
-    from xmtdx import TdxClient, Market, KlineCategory
+    from easy_tdx import TdxClient, Market, KlineCategory
 
     with TdxClient("180.153.18.170") as c:
         count = c.get_security_count(Market.SH)
@@ -11,7 +11,7 @@
 asyncio 版本::
 
     import asyncio
-    from xmtdx import AsyncTdxClient, Market, KlineCategory
+    from easy_tdx import AsyncTdxClient, Market, KlineCategory
 
     async def main():
         async with AsyncTdxClient("180.153.18.170") as c:
@@ -75,4 +75,4 @@ __all__ = [
     "CALC_HOSTS",
 ]
 
-__version__ = "0.1.1"
+__version__ = "1.0.0"

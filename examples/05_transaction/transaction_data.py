@@ -1,7 +1,7 @@
 """演示：获取当日逐笔成交数据。"""
 
 import pandas as pd
-from xmtdx import TdxClient, Market
+from easy_tdx import TdxClient, Market
 
 with TdxClient.from_best_host() as c:
     records = c.get_transaction_data(Market.SH, "600000", 0, 20)

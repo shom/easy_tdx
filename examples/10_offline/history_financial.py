@@ -12,7 +12,7 @@
 
 from pathlib import Path
 
-from xmtdx.offline import detect_tdx_home, read_history_financial
+from easy_tdx.offline import detect_tdx_home, read_history_financial
 
 home = detect_tdx_home()
 if home is None:
