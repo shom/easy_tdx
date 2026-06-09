@@ -182,7 +182,7 @@ def _print_table(result: Any) -> None:
     click.echo(f"总收益率: {perf.get('total_return', 0):.2%}")
     click.echo(f"年化收益: {perf.get('annual_return', 0):.2%}")
     click.echo(f"最大回撤: {perf.get('max_drawdown', 0):.2%}")
-    click.echo(f"夏普比率: {perf.get('sharpe_ratio', 0):.2f}")
+    click.echo(f"夏普比率: {perf.get('sharpe', 0):.2f}")
     click.echo(f"胜率: {perf.get('win_rate', 0):.2%}")
     click.echo(f"交易次数: {perf.get('total_trades', 0)}")
     click.echo()
