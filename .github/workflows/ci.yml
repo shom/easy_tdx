@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - run: python -m pytest tests/unit/ -v --tb=short
+      - run: python -m pytest tests/unit/ -v --tb=short --cov src/easy_tdx --cov-fail-under=50
       - run: ruff check src/ tests/
       - run: ruff format --check src/ tests/
 

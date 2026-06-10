@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -174,8 +175,8 @@ class PerformanceAnalyzer:
         # 17. 最大亏损
         max_loss = lose_pnl.min() if len(lose_pnl) > 0 else 0.0
 
-        # 18. 平均持仓天数（简化为固定值）
-        avg_holding_days = 5.0
+        # 18. 平均持仓天数（FIFO 配对计算）
+        avg_holding_days = self._compute_avg_holding_days()
 
         # 19. 年化波动率
         volatility = np.std(daily_ret) * np.sqrt(self.ANNUAL_DAYS)
@@ -201,6 +202,60 @@ class PerformanceAnalyzer:
             "avg_holding_days": avg_holding_days,
             "volatility": volatility,
         }
+
+    def _compute_avg_holding_days(self) -> float:
+        """计算平均持仓天数（FIFO 配对）。
+
+        遍历非 rejected 的交易记录，使用 FIFO 队列配对买入和卖出，
+        按 size 加权计算平均持仓天数。
+
+        Returns:
+            加权平均持仓天数，无完整配对时返回 0.0
+        """
+        if "datetime" not in self._trades.columns:
+            return 0.0
+
+        # 只处理非 rejected 的交易
+        valid = self._trades[~self._trades["rejected"]]
+        if len(valid) == 0:
+            return 0.0
+
+        buy_queue: deque[tuple[int, float]] = deque()  # (datetime, size)
+        total_days = 0.0
+        total_size = 0.0
+
+        for _, row in valid.iterrows():
+            raw_dt = row["datetime"]
+            # datetime 可能是 int (YYYYMMDD) 或 pd.Timestamp
+            dt = (
+                int(raw_dt)
+                if not isinstance(raw_dt, pd.Timestamp)
+                else int(raw_dt.strftime("%Y%m%d"))
+            )
+            direction = row["direction"]
+            size = float(row["size"]) if "size" in valid.columns else 100.0
+
+            if direction == "BUY":
+                buy_queue.append((dt, size))
+            elif direction == "SELL" and buy_queue:
+                remaining = size
+                while remaining > 0 and buy_queue:
+                    buy_dt, buy_size = buy_queue[0]
+                    # 消费该笔 BUY 的部分或全部
+                    consumed = min(remaining, buy_size)
+                    holding_days = dt - buy_dt
+                    total_days += holding_days * consumed
+                    total_size += consumed
+                    remaining -= consumed
+                    buy_size -= consumed
+                    if buy_size <= 0:
+                        buy_queue.popleft()
+                    else:
+                        buy_queue[0] = (buy_dt, buy_size)
+
+        if total_size == 0:
+            return 0.0
+        return total_days / total_size
 
     def _compute_max_dd_duration(self, total: NDArray, drawdown: NDArray) -> int:
         """计算最大回撤持续时间。

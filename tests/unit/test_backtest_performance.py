@@ -47,11 +47,12 @@ def _make_trades() -> pd.DataFrame:
     """创建测试用交易记录。
 
     Returns:
-        包含 direction, pnl, rejected 的 DataFrame
-        4 条交易: BUY@100, SELL@105(pnl=500), BUY@95, SELL@90(pnl=-500)
+        包含 datetime, direction, pnl, rejected 的 DataFrame
+        4 条交易: BUY@20240101, SELL@20240106(pnl=500), BUY@20240110, SELL@20240115(pnl=-500)
     """
     return pd.DataFrame(
         {
+            "datetime": [20240101, 20240106, 20240110, 20240115],
             "direction": ["BUY", "SELL", "BUY", "SELL"],
             "pnl": [0, 500, 0, -500],
             "rejected": [False, False, False, False],
@@ -323,16 +324,75 @@ def test_win_trades_and_lose_trades_count() -> None:
     assert metrics["lose_trades"] == 1
 
 
-def test_avg_holding_days() -> None:
-    """测试平均持仓天数（固定值）。"""
+def test_avg_holding_days_fifo() -> None:
+    """测试平均持仓天数（FIFO 配对计算）。"""
     equity = _make_equity_curve(n=252, total_return=0.1)
     trades = _make_trades()
 
     analyzer = PerformanceAnalyzer(equity, trades)
     metrics = analyzer.compute()
 
-    # 平均持仓天数应为固定值 5.0
+    # BUY@20240101 → SELL@20240106: 5 天
+    # BUY@20240110 → SELL@20240115: 5 天
+    # 平均 = (5 + 5) / 2 = 5.0
     assert metrics["avg_holding_days"] == 5.0
+
+
+def test_avg_holding_days_weighted() -> None:
+    """测试加权平均持仓天数（不同持仓期）。"""
+    equity = _make_equity_curve(n=252, total_return=0.1)
+    trades = pd.DataFrame(
+        {
+            "datetime": [20240101, 20240111, 20240120, 20240123],
+            "direction": ["BUY", "SELL", "BUY", "SELL"],
+            "pnl": [0, 500, 0, -200],
+            "rejected": [False, False, False, False],
+        }
+    )
+
+    analyzer = PerformanceAnalyzer(equity, trades)
+    metrics = analyzer.compute()
+
+    # BUY@20240101 → SELL@20240111: 10 天
+    # BUY@20240120 → SELL@20240123: 3 天
+    # 平均 = (10 + 3) / 2 = 6.5
+    assert metrics["avg_holding_days"] == 6.5
+
+
+def test_avg_holding_days_no_datetime() -> None:
+    """测试 trades 没有 datetime 列时返回 0.0。"""
+    equity = _make_equity_curve(n=252, total_return=0.1)
+    # 不含 datetime 列的交易记录
+    trades = pd.DataFrame(
+        {
+            "direction": ["BUY", "SELL"],
+            "pnl": [0, 500],
+            "rejected": [False, False],
+        }
+    )
+
+    analyzer = PerformanceAnalyzer(equity, trades)
+    metrics = analyzer.compute()
+
+    assert metrics["avg_holding_days"] == 0.0
+
+
+def test_avg_holding_days_only_buys() -> None:
+    """测试只有买入没有卖出时返回 0.0。"""
+    equity = _make_equity_curve(n=252, total_return=0.1)
+    trades = pd.DataFrame(
+        {
+            "datetime": [20240101, 20240105],
+            "direction": ["BUY", "BUY"],
+            "pnl": [0, 0],
+            "rejected": [False, False],
+        }
+    )
+
+    analyzer = PerformanceAnalyzer(equity, trades)
+    metrics = analyzer.compute()
+
+    assert metrics["avg_holding_days"] == 0.0
 
 
 def test_max_dd_duration() -> None:

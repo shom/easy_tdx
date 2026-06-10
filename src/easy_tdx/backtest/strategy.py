@@ -433,18 +433,25 @@ class Strategy(ABC):
 def _datetime_to_int(arr: NDArray) -> NDArray:
     """将 datetime 数组转为 int (YYYYMMDD)。
 
+    向量化实现，自动处理 datetime64、object（Timestamp）和数值类型。
+
     Args:
-        arr: datetime 数组（np.datetime64 或 pd.Timestamp）
+        arr: datetime 数组（np.datetime64、pd.Timestamp 或数值）
 
     Returns:
-        int 数组，格式 YYYYMMDD
+        float64 数组，格式 YYYYMMDD
     """
-    result = np.zeros(len(arr), dtype=np.float64)
-    for i, val in enumerate(arr):
-        if isinstance(val, np.datetime64 | pd.Timestamp):
-            ts = pd.Timestamp(val)
-            result[i] = float(ts.strftime("%Y%m%d"))
-        else:
-            # 已经是 int 或可转为 int
-            result[i] = float(val)
-    return result
+    if len(arr) == 0:
+        return np.array([], dtype=np.float64)
+    arr = np.asarray(arr)
+    # datetime64 → 向量化转换
+    if arr.dtype.kind == "M":
+        return np.asarray(pd.to_datetime(arr).strftime("%Y%m%d").astype(float), dtype=np.float64)
+    # object 数组（可能包含 Timestamp）
+    if arr.dtype == object:
+        if len(arr) > 0 and isinstance(arr[0], pd.Timestamp | np.datetime64):
+            return np.asarray(
+                pd.to_datetime(arr).strftime("%Y%m%d").astype(float), dtype=np.float64
+            )
+    # 已经是数值类型
+    return arr.astype(np.float64)
