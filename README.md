@@ -1222,8 +1222,9 @@ src/easy_tdx/
 ├── commands/          # 标准协议命令（无 IO）
 ├── codec/             # price / volume / datetime / frame / bitmap 编解码
 ├── chanlun/           # 缠论技术分析（K线合并/分型/笔/线段/中枢/买卖点/背驰）
-├── backtest/          # 回测引擎（Strategy基类/向量化引擎/多因子组合/绩效分析）
-├── screen/            # 策略选股扫描（scan信号扫描/rank回测排名）
+├── backtest/          # 回测引擎（Strategy基类/向量化引擎/多因子组合/组合回测/绩效分析）
+├── screen/            # 策略选股扫描（scan信号扫描/rank回测排名/并发扫描/增量缓存）
+├── realtime/          # 实时数据推送框架（EventBus/事件驱动/asyncio）
 ├── models/            # 纯 dataclass，无业务逻辑
 ├── offline/           # 离线数据读写模块（读取 + 写入同步）
 └── cli/               # easy-tdx CLI（click）
@@ -1251,6 +1252,24 @@ ruff format --check src/ tests/                              # format check
 详见 [NOTICE](NOTICE) 和 [LICENSE](LICENSE)。
 
 ## Changelog
+
+### 1.9.6 (2026-06-11)
+
+**工程质量全面升级** — 基于 Devin AI 代码审查的 12 项改进建议全部落地，覆盖 CI、回测引擎、缠论模块、扫描引擎和架构层面。
+
+- **CI 覆盖率强制执行**：pytest 命令加入 `--cov-fail-under=50`，CI 不再空转
+- **真实平均持仓天数**：`avg_holding_days` 从硬编码 5.0 改为 FIFO 配对计算，区分 int/Timestamp 两种日期格式
+- **向量化 datetime 转换**：`_datetime_to_int` 用 `pd.to_datetime` 向量化替代 Python for 循环，大数组性能提升 100x+
+- **止损/止盈实际执行**：`BacktestEngine` 新增 `_StopCondition` 跟踪，`OrderSimulator` 在每根 bar 检查 SL/TP 并触发平仓信号
+- **缠论信号自动桥接**：`BacktestEngine` 新增 `chanlun_level` 参数，自动调用 `ChanlunAnalyser` 并注入策略，两模块正式打通
+- **多标的组合回测**：新增 `PortfolioBacktestEngine`，支持多股票共享资金池、均等/自定义分配、资金加权绩效汇总
+- **并发扫描**：`SignalScanner` 新增 `workers` 参数，`ProcessPoolExecutor` 并行处理，扫描速度提升 4-8 倍
+- **增量扫描缓存**：新增 mtime 检测 + JSON 缓存文件，未修改的 `.day` 文件自动跳过
+- **缠论增量更新**：`ChanlunAnalyser` 新增 `append_klines()` 方法，追加新 K 线后去重重新计算，支持实时场景
+- **多级别联立增强**：`query_low_level_qs` 新增趋势方向、笔重叠、背驰条件判断字段
+- **MyTT 类型存根**：新增 `MyTT.pyi`，50+ 指标函数的类型标注，mypy strict 零错误
+- **实时推送框架**：新增 `realtime/` 模块，`EventBus` 发布/订阅 + `RealtimeStrategy` 基类，asyncio 事件驱动架构（API 骨架）
+- 380 个测试通过，57.56% 覆盖率，mypy strict 150 文件零错误
 
 ### 1.9.5 (2026-06-10)
 

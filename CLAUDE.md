@@ -43,6 +43,17 @@ src/easy_tdx/
 │   └── async_.py      # AsyncTdxConnection（asyncio）
 ├── commands/          # 每条命令：build_request() + parse_response()，无 IO
 ├── codec/             # price / volume / datetime / frame 编解码
+├── backtest/          # 回测引擎
+│   ├── engine.py      # BacktestEngine（止损/止盈执行/缠论自动桥接）
+│   ├── strategy.py    # Strategy 基类（向量化 datetime）
+│   ├── orders.py      # OrderSimulator（SL/TP 同 bar 执行）
+│   ├── performance.py # PerformanceAnalyzer（FIFO 真实持仓天数）
+│   ├── portfolio_engine.py # 多标的组合回测
+│   └── combo.py       # 多因子组合回测
+├── screen/
+│   └── scanner.py     # SignalScanner（并发扫描/增量缓存）
+├── realtime/
+│   └── engine.py      # EventBus + RealtimeStrategy（asyncio 事件驱动）
 ├── cli/
 │   └── cmd_chanlun.py # easy-tdx chanlun CLI 命令
 └── models/            # 纯 dataclass，无业务逻辑
@@ -84,6 +95,11 @@ from easy_tdx.chanlun import ChanlunAnalyser
 analyser = ChanlunAnalyser("SZ000001", "DAILY")
 result = analyser.process_klines(df)  # 接收 easy_tdx 的 DataFrame
 print(result.to_dict())  # JSON 兼容字典
+
+# 增量追加新 K 线（去重后重新计算，适合实时场景）
+result = analyser.append_klines(df_new)
 ```
+
+**多级别联立**：`MultiLevelAnalyser.query_low_level_qs()` 返回趋势方向、笔重叠、背驰条件等增强字段。
 
 **测试**: `python -m pytest tests/unit/test_chanlun*.py -v`（3 个测试文件共 49 个用例，无需网络）
