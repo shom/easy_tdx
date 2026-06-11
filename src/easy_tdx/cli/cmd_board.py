@@ -194,3 +194,47 @@ def board_ranking(
     with get_mac_client() as client:
         df = client.get_board_ranking(board_type=bt, top_n=top_n, sort_by=sort_by, ascending=asc)
     print_output(df, fmt)
+
+
+@click.command("board-change-ranking")
+@click.option("--type", "board_type", default="HY", help="板块类型: HY/GN/FG/DQ/ALL")
+@click.option("--date", "target_date", default=None, type=int, help="截止日期 YYYYMMDD (默认最新)")
+@click.option("--days", default=20, type=int, help="回溯交易日数 (默认 20)")
+@click.option("--top", "top_n", default=None, type=int, help="排行数量 (默认全部)")
+@click.option("--asc", is_flag=True, help="升序 (默认降序)")
+@click.option("--table", "use_table", is_flag=True, help="表格输出")
+@click.option("--output", "output_fmt", type=click.Choice(["json", "table", "csv"]), default="json")
+def board_change_ranking(
+    board_type: str,
+    target_date: int | None,
+    days: int,
+    top_n: int,
+    asc: bool,
+    use_table: bool,
+    output_fmt: str,
+) -> None:
+    """获取板块 N 日涨跌幅排行榜。
+
+    示例：
+
+      easy-tdx board-change-ranking --table
+
+      easy-tdx board-change-ranking --type GN --days 10 --top 15 --table
+
+      easy-tdx board-change-ranking --type HY --date 20250530 --days 20 --table
+    """
+    from .conn import get_mac_client
+    from .output import print_output
+    from .parsers import parse_board_type
+
+    fmt = "table" if use_table else output_fmt
+    bt = parse_board_type(board_type)
+    with get_mac_client() as client:
+        df = client.get_board_change_ranking(
+            board_type=bt,
+            target_date=target_date,
+            days=days,
+            top_n=top_n,
+            ascending=asc,
+        )
+    print_output(df, fmt)

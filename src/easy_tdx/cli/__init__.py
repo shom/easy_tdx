@@ -8,7 +8,14 @@ from ..backtest.cli import backtest, portfolio
 from ..screen.cli import screen
 from .cmd_admin import ping, version
 from .cmd_auction import auction
-from .cmd_board import belong_board, board_list, board_members, board_ranking, board_summary
+from .cmd_board import (
+    belong_board,
+    board_change_ranking,
+    board_list,
+    board_members,
+    board_ranking,
+    board_summary,
+)
 from .cmd_capital import capital_flow
 from .cmd_chanlun import chanlun
 from .cmd_ex import ex
@@ -58,6 +65,7 @@ cli.add_command(auction)
 cli.add_command(board_list)
 cli.add_command(board_members)
 cli.add_command(board_ranking)
+cli.add_command(board_change_ranking)
 cli.add_command(board_summary)
 cli.add_command(belong_board)
 cli.add_command(capital_flow)

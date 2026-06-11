@@ -110,6 +110,12 @@ easy-tdx board-summary 881001 --table          # 板块汇总（成交额/主力
 easy-tdx board-summary 881001 --members --table # 含成分股明细
 easy-tdx board-ranking --type HY --top 10 --table   # 行业板块排行
 easy-tdx board-ranking --type GN --sort-by amount    # 概念板块按成交额排行
+
+# 板块 N 日涨跌幅排行（默认全部，支持指定日期）
+easy-tdx board-change-ranking --table                      # 行业 20 日涨跌幅排行
+easy-tdx board-change-ranking --type GN --days 10 --table  # 概念 10 日涨跌幅排行
+easy-tdx board-change-ranking --type HY --date 20250530 --days 20 --table
+easy-tdx board-change-ranking --type HY --top 10 --asc     # 行业跌幅前10
 ```
 
 ### 资金 / 监控
@@ -744,6 +750,7 @@ easy-tdx offline sync-all
 | `board-members` | 板块成分股报价 |
 | `board-summary` | 板块汇总（成交额、主力净流入、涨跌家数） |
 | `board-ranking` | 板块涨跌幅排行榜（行业/概念排行） |
+| `board-change-ranking` | 板块 N 日涨跌幅排行（支持指定截止日期） |
 | `belong-board` | 个股所属板块 |
 | `capital-flow` | 资金流向 |
 | `auction` | 集合竞价 |
@@ -946,6 +953,11 @@ with MacClient.from_best_host() as c:
     df = c.get_board_ranking(BoardType.HY, top_n=10, sort_by="change_pct")
     df = c.get_board_ranking(BoardType.GN, top_n=20, sort_by="main_net_amount")
     # 返回列：code, name, change_pct, amount, vol, main_net_amount, up_count, down_count, member_count
+
+    # 板块 N 日涨跌幅排行（支持指定截止日期，默认全部）
+    df = c.get_board_change_ranking(BoardType.HY, days=20)
+    df = c.get_board_change_ranking(BoardType.GN, target_date=20250530, days=10, top_n=15)
+    # 返回列：code, name, close_end, close_start, change_pct
 ```
 
 #### 资金流向
@@ -1207,6 +1219,7 @@ print(result.to_dict())
 | `get_board_members(board_symbol, ...)` | 板块成分股报价 |
 | `get_board_summary(board_symbol, ...)` | 板块汇总（成交额、主力净流入、涨跌家数） |
 | `get_board_ranking(board_type, top_n, sort_by, ...)` | 板块涨跌幅排行榜（行业/概念排行） |
+| `get_board_change_ranking(board_type, target_date, days, ...)` | 板块 N 日涨跌幅排行 |
 | `get_belong_board(market, code)` | 个股所属板块 |
 | `get_capital_flow(market, code)` | 资金流向 |
 | `get_auction(market, code)` | 集合竞价 |
@@ -1307,6 +1320,17 @@ ruff format --check src/ tests/                              # format check
 详见 [NOTICE](NOTICE) 和 [LICENSE](LICENSE)。
 
 ## Changelog
+
+### 1.9.10 (2026-06-11)
+
+**板块 N 日涨跌幅排行** — 新增 `board-change-ranking` 命令，支持按行业/概念/风格板块计算指定日期前 N 个交易日的涨跌幅并排行。
+
+- 新增 `MacClient.get_board_change_ranking()` / `AsyncMacClient` 同名异步方法
+- 新增 CLI 命令 `easy-tdx board-change-ranking`，支持 `--type`、`--date`、`--days`、`--top`、`--asc` 参数
+- 利用板块指数 K 线直接计算，无需逐个聚合成分股，效率远高于现有 `board-ranking`
+- 支持指定截止日期（`--date YYYYMMDD`），周末/节假日自动回退到前一交易日
+- 默认列出全部板块，`--top N` 截断前 N 个
+- 12 个单元测试覆盖计算正确性、边界条件、排序方向
 
 ### 1.9.9 (2026-06-11)
 

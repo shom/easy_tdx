@@ -757,6 +757,108 @@ class MacClient:
             result = result.sort_values(sort_by, ascending=ascending).reset_index(drop=True)
         return result
 
+    def get_board_change_ranking(
+        self,
+        board_type: BoardType = BoardType.HY,
+        target_date: int | None = None,
+        days: int = 20,
+        top_n: int | None = None,
+        ascending: bool = False,
+    ) -> pd.DataFrame:
+        """获取板块 N 日涨跌幅排行榜。
+
+        对每个板块获取日 K 线，计算指定日期前 N 个交易日的涨跌幅并排行。
+        利用板块指数自身的 K 线数据，无需逐个聚合成分股。
+
+        Args:
+            board_type: 板块类型（行业 / 概念 / 风格 / 地区 / 全部）。
+            target_date: 截止日期（YYYYMMDD），``None`` 表示最新交易日。
+            days: 回溯交易日数（默认 20）。
+            top_n: 返回排行数量，``None`` 表示全部（默认）。
+            ascending: 排序方向，默认降序（涨幅最大排前）。
+
+        Returns:
+            DataFrame，列::
+
+                code         板块代码
+                name         板块名称
+                close_end    截止日收盘价
+                close_start  N 日前收盘价
+                change_pct   涨跌幅%
+        """
+        if days < 1:
+            raise ValueError(f"days 必须 >= 1，got {days}")
+
+        boards_df = self.get_board_list(board_type)
+        if boards_df.empty:
+            return pd.DataFrame(
+                columns=["code", "name", "close_end", "close_start", "change_pct"]
+            )
+
+        fetch_count = days + 10  # 缓冲节假日
+        target_ts: pd.Timestamp | None = None
+        if target_date is not None:
+            target_ts = pd.Timestamp(
+                year=target_date // 10000,
+                month=(target_date // 100) % 100,
+                day=target_date % 100,
+            )
+
+        rows: list[dict[str, Any]] = []
+        for _, row in boards_df.iterrows():
+            board_code = str(row["code"])
+            board_market = int(row["market"]) if "market" in row.index else 1
+            try:
+                kline_df = self.get_stock_kline(
+                    market=board_market,
+                    code=board_code,
+                    period=Period.DAILY,
+                    count=fetch_count,
+                    adjust=Adjust.NONE,
+                )
+            except Exception:
+                continue
+
+            if kline_df.empty or len(kline_df) < 2:
+                continue
+
+            kline_df = kline_df.sort_values("datetime").reset_index(drop=True)
+
+            if target_ts is not None:
+                mask = kline_df["datetime"] <= target_ts
+                if not mask.any():
+                    continue
+                end_pos = int(mask[mask].index[-1])
+            else:
+                end_pos = len(kline_df) - 1
+
+            start_pos = max(0, end_pos - days)
+            close_end = float(kline_df.loc[end_pos, "close"])
+            close_start = float(kline_df.loc[start_pos, "close"])
+            if close_start == 0:
+                continue
+
+            change_pct = round((close_end - close_start) / close_start * 100, 2)
+            rows.append(
+                {
+                    "code": board_code,
+                    "name": row.get("name", ""),
+                    "close_end": close_end,
+                    "close_start": close_start,
+                    "change_pct": change_pct,
+                }
+            )
+
+        result = pd.DataFrame(
+            rows, columns=["code", "name", "close_end", "close_start", "change_pct"]
+        )
+        if not result.empty:
+            result = result.sort_values("change_pct", ascending=ascending)
+            if top_n is not None:
+                result = result.head(top_n)
+            result = result.reset_index(drop=True)
+        return result
+
     # ------------------------------------------------------------------ #
     # 资金流向
     # ------------------------------------------------------------------ #
@@ -1489,6 +1591,101 @@ class AsyncMacClient:
         result = pd.DataFrame(rows)
         if not result.empty:
             result = result.sort_values(sort_by, ascending=ascending).reset_index(drop=True)
+        return result
+
+    async def get_board_change_ranking(
+        self,
+        board_type: BoardType = BoardType.HY,
+        target_date: int | None = None,
+        days: int = 20,
+        top_n: int | None = None,
+        ascending: bool = False,
+    ) -> pd.DataFrame:
+        """获取板块 N 日涨跌幅排行榜（异步）。
+
+        对每个板块获取日 K 线，计算指定日期前 N 个交易日的涨跌幅并排行。
+
+        Args:
+            board_type: 板块类型。
+            target_date: 截止日期（YYYYMMDD），``None`` 表示最新交易日。
+            days: 回溯交易日数（默认 20）。
+            top_n: 返回排行数量，``None`` 表示全部（默认）。
+            ascending: 排序方向，默认降序。
+
+        Returns:
+            DataFrame，列：code, name, close_end, close_start, change_pct
+        """
+        if days < 1:
+            raise ValueError(f"days 必须 >= 1，got {days}")
+
+        boards_df = await self.get_board_list(board_type)
+        if boards_df.empty:
+            return pd.DataFrame(
+                columns=["code", "name", "close_end", "close_start", "change_pct"]
+            )
+
+        fetch_count = days + 10
+        target_ts: pd.Timestamp | None = None
+        if target_date is not None:
+            target_ts = pd.Timestamp(
+                year=target_date // 10000,
+                month=(target_date // 100) % 100,
+                day=target_date % 100,
+            )
+
+        rows: list[dict[str, Any]] = []
+        for _, row in boards_df.iterrows():
+            board_code = str(row["code"])
+            board_market = int(row["market"]) if "market" in row.index else 1
+            try:
+                kline_df = await self.get_stock_kline(
+                    market=board_market,
+                    code=board_code,
+                    period=Period.DAILY,
+                    count=fetch_count,
+                    adjust=Adjust.NONE,
+                )
+            except Exception:
+                continue
+
+            if kline_df.empty or len(kline_df) < 2:
+                continue
+
+            kline_df = kline_df.sort_values("datetime").reset_index(drop=True)
+
+            if target_ts is not None:
+                mask = kline_df["datetime"] <= target_ts
+                if not mask.any():
+                    continue
+                end_pos = int(mask[mask].index[-1])
+            else:
+                end_pos = len(kline_df) - 1
+
+            start_pos = max(0, end_pos - days)
+            close_end = float(kline_df.loc[end_pos, "close"])
+            close_start = float(kline_df.loc[start_pos, "close"])
+            if close_start == 0:
+                continue
+
+            change_pct = round((close_end - close_start) / close_start * 100, 2)
+            rows.append(
+                {
+                    "code": board_code,
+                    "name": row.get("name", ""),
+                    "close_end": close_end,
+                    "close_start": close_start,
+                    "change_pct": change_pct,
+                }
+            )
+
+        result = pd.DataFrame(
+            rows, columns=["code", "name", "close_end", "close_start", "change_pct"]
+        )
+        if not result.empty:
+            result = result.sort_values("change_pct", ascending=ascending)
+            if top_n is not None:
+                result = result.head(top_n)
+            result = result.reset_index(drop=True)
         return result
 
     # ------------------------------------------------------------------ #
