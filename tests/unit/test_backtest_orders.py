@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from easy_tdx.backtest.orders import OrderSimulator
+from easy_tdx.backtest.slippage import FixedSlippage, PercentSlippage
 from easy_tdx.backtest.types import Signal
 
 # ── Test Fixtures ─────────────────────────────────────────────────────────────
@@ -390,3 +392,75 @@ class TestEdgeCases:
         # 简化：只验证成交记录
         assert len(trades) == 1
         assert trades[0].size == 100
+
+
+# ── Test SlippageModel Integration ─────────────────────────────────────────────
+
+
+class TestSlippageModelIntegration:
+    """测试 OrderSimulator 与 SlippageModel 集成。"""
+
+    def test_fixed_slippage_model(self) -> None:
+        """FixedSlippage 与旧 slippage 参数等价。"""
+        df = _make_df(10)
+        sim = OrderSimulator(
+            df,
+            execution="next_open",
+            slippage_model=FixedSlippage(per_share=0.01),
+        )
+        signals = [_buy_signal(0, size=100)]
+        trades = sim.simulate(signals, cash=20000, position=0)
+        assert len(trades) == 1
+        assert trades[0].slippage == pytest.approx(1.0)
+
+    def test_percent_slippage_model(self) -> None:
+        """PercentSlippage 计算。"""
+        df = _make_df(10)
+        sim = OrderSimulator(
+            df,
+            execution="next_open",
+            slippage_model=PercentSlippage(rate=0.001),
+        )
+        signals = [_buy_signal(0, size=100)]
+        trades = sim.simulate(signals, cash=20000, position=0)
+        assert len(trades) == 1
+        # price=101 (next_open), 101 × 100 × 0.001 = 10.1
+        assert trades[0].slippage == pytest.approx(10.1)
+
+    def test_slippage_model_overrides_slippage_param(self) -> None:
+        """slippage_model 优先于 slippage 参数。"""
+        df = _make_df(10)
+        sim = OrderSimulator(
+            df,
+            execution="next_open",
+            position_mode="fixed",
+            slippage=999.0,
+            slippage_model=FixedSlippage(per_share=0.01),
+        )
+        signals = [_buy_signal(0, size=100)]
+        trades = sim.simulate(signals, cash=20000, position=0)
+        assert len(trades) == 1
+        assert trades[0].slippage == pytest.approx(1.0)
+
+    def test_sell_with_slippage_model(self) -> None:
+        """卖出时也使用滑点模型。"""
+        df = _make_df(10)
+        sim = OrderSimulator(
+            df,
+            execution="next_open",
+            slippage_model=FixedSlippage(per_share=0.02),
+        )
+        signals = [_sell_signal(0, size=100)]
+        trades = sim.simulate(signals, cash=0, position=100)
+        assert len(trades) == 1
+        # position_mode=full, size=0 → sell all position=100
+        assert trades[0].slippage == pytest.approx(2.0)
+
+    def test_no_slippage_model_uses_old_param(self) -> None:
+        """不提供 model 时使用旧 slippage 参数。"""
+        df = _make_df(10)
+        sim = OrderSimulator(df, execution="next_open", slippage=0.05)
+        signals = [_buy_signal(0, size=100)]
+        trades = sim.simulate(signals, cash=20000, position=0)
+        assert len(trades) == 1
+        assert trades[0].slippage == pytest.approx(5.0)

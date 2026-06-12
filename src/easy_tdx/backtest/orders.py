@@ -6,10 +6,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 
 from easy_tdx.backtest.types import Signal, Trade
+
+if TYPE_CHECKING:
+    from easy_tdx.backtest.slippage import SlippageModel
 
 
 @dataclass
@@ -39,6 +44,7 @@ class OrderSimulator:
     min_commission: float = 5.0
     stamp_tax: float = 0.001
     slippage: float = 0.0
+    slippage_model: SlippageModel | None = None
     future_leak_warning: bool = False
 
     def simulate(
@@ -288,6 +294,37 @@ class OrderSimulator:
 
         return commission
 
+    def _compute_slippage(self, size: float, price: float, is_sell: bool) -> float:
+        """计算滑点成本。"""
+        if self.slippage_model is not None:
+            volume = self._get_current_volume()
+            volatility = self._estimate_volatility()
+            return self.slippage_model.compute(
+                price=price,
+                size=size,
+                volume=volume,
+                volatility=volatility,
+                direction="SELL" if is_sell else "BUY",
+            )
+        return size * self.slippage
+
+    def _get_current_volume(self) -> float:
+        """获取最后一根K线的成交量。"""
+        if "volume" in self.df.columns and len(self.df) > 0:
+            return float(self.df["volume"].iloc[-1])
+        return 0.0
+
+    def _estimate_volatility(self) -> float:
+        """从收盘价估计年化波动率。"""
+        if "close" not in self.df.columns or len(self.df) < 2:
+            return 0.0
+        close = self.df["close"].to_numpy()
+        returns = np.diff(close) / close[:-1]
+        if len(returns) < 2:
+            return 0.0
+        daily_vol = float(np.std(returns))
+        return daily_vol * np.sqrt(252)
+
     def _execute_buy(
         self,
         signal: Signal,
@@ -338,7 +375,7 @@ class OrderSimulator:
 
         # 计算费用
         commission = self._calculate_commission(size, price, is_sell=False)
-        slippage = size * self.slippage
+        slippage = self._compute_slippage(size, price, is_sell=False)
 
         # 检查资金是否足够
         total_cost = size * price + commission + slippage
@@ -361,7 +398,7 @@ class OrderSimulator:
                     reduced_size = int(available_cash / price / 100) * 100
                     if reduced_size > 0:
                         commission = self._calculate_commission(reduced_size, price, is_sell=False)
-                        slippage = reduced_size * self.slippage
+                        slippage = self._compute_slippage(reduced_size, price, is_sell=False)
                         return Trade(
                             datetime=self.df.iloc[exec_idx]["datetime"],
                             direction="BUY",
@@ -446,7 +483,7 @@ class OrderSimulator:
 
         # 计算费用
         commission = self._calculate_commission(size, price, is_sell=True)
-        slippage = size * self.slippage
+        slippage = self._compute_slippage(size, price, is_sell=True)
 
         return Trade(
             datetime=self.df.iloc[exec_idx]["datetime"],
