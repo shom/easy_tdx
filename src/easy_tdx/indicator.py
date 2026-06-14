@@ -199,6 +199,46 @@ _reg(
     "TAQ", ("high", "low"), ("TAQ_UP", "TAQ_MID", "TAQ_DOWN"), MyTT.TAQ, {"N": 20}, "TAQ 唐安奇通道"
 )
 
+# ── SAR 抛物线转向（仅需 high + low）─────────────────────────────────
+_reg(
+    "SAR",
+    ("high", "low"),
+    ("SAR",),
+    MyTT.SAR,
+    {"AF_STEP": 0.02, "AF_MAX": 0.2},
+    "SAR 抛物线转向（动态止损位）",
+)
+
+# ── VWAP 成交量加权均价（close + high + low + vol）────────────────────
+_reg(
+    "VWAP",
+    ("close", "high", "low", "vol"),
+    ("VWAP",),
+    MyTT.VWAP,
+    {"N": 20},
+    "VWAP 成交量加权均价（N日滚动机构基准成本）",
+)
+
+# ── Aroon 阿隆指标（仅需 high + low）────────────────────────────────
+_reg(
+    "AROON",
+    ("high", "low"),
+    ("AROON_UP", "AROON_DOWN", "AROON_OSC"),
+    MyTT.AROON,
+    {"N": 25},
+    "AROON 阿隆指标（趋势启动时机）",
+)
+
+# ── FK 趋势快线慢线（仅需 close，清理孤儿函数）──────────────────────
+_reg(
+    "FK",
+    ("close",),
+    ("FK",),
+    MyTT.FK,
+    {},
+    "FK 趋势指标（EMA(2) 突破斜率外推 EMA(42)，动量偏离检测）",
+)
+
 
 def list_indicators() -> list[dict[str, object]]:
     """返回所有可用指标的元数据。"""

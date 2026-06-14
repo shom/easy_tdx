@@ -14,7 +14,7 @@ easy-tdx 要做的事很简单：**把机构的数据锁砸开，扔到每个普
 它是一个完全免费、无需注册、无需 API Key、纯开源的行**情核武器**。  
 一行命令，A股、港股、美股、期货——K线、报价、资金流向、板块轮动、分时明细、逐笔成交，**毫秒级拉满**。
 
-**32个技术指标**（MACD、KDJ、RSI、BOLL……连”捉妖大师”和”30日乖离率信号”都给你算好）开箱即用。
+**34个技术指标**（MACD、KDJ、RSI、BOLL……连”捉妖大师”和”30日乖离率信号”都给你算好）开箱即用。
 **缠论分析**（笔、中枢、买卖点、背驰）一键出结果——你不再需要手画分型、猜线段。
 **内置回测引擎**——写个策略文件，一行命令跑回测，16 个经典策略自带，多因子组合、策略选股扫描，批量对比哪个最赚钱一目了然。
 
@@ -709,7 +709,7 @@ with MacClient.from_best_host() as c:
     #         + BS_X, BS_SMA, BS_LMA
 ```
 
-支持 32 个指标：MACD, KDJ, RSI, BOLL, DMI, ATR, WR, CCI, BIAS, BIAS_SIGNAL, OBV, VR, EMV, MFI, BRAR, ASI, TRIX, DPO, MTM, ROC, EXPMA, BBI, PSY, DFMA, CR, KTN, XSII, MASS, TAQ, ZHUOYAO。
+支持 34 个指标：MACD, KDJ, RSI, BOLL, DMI, ATR, WR, CCI, BIAS, BIAS_SIGNAL, OBV, VR, EMV, MFI, BRAR, ASI, TRIX, DPO, MTM, ROC, EXPMA, BBI, PSY, DFMA, CR, KTN, XSII, MASS, TAQ, ZHUOYAO, SAR, VWAP, AROON, FK。
 
 ```python
 # Python API 用法
@@ -725,7 +725,7 @@ with MacClient.from_best_host() as c:
     #         + ZY_LONG, ZY_MID, ZY_SHORT, ZY_TREND
 ```
 
-支持 32 个指标：MACD, KDJ, RSI, BOLL, DMI, ATR, WR, CCI, BIAS, BIAS_SIGNAL, OBV, VR, EMV, MFI, BRAR, ASI, TRIX, DPO, MTM, ROC, EXPMA, BBI, PSY, DFMA, CR, KTN, XSII, MASS, TAQ, ZHUOYAO。
+支持 34 个指标：MACD, KDJ, RSI, BOLL, DMI, ATR, WR, CCI, BIAS, BIAS_SIGNAL, OBV, VR, EMV, MFI, BRAR, ASI, TRIX, DPO, MTM, ROC, EXPMA, BBI, PSY, DFMA, CR, KTN, XSII, MASS, TAQ, ZHUOYAO, SAR, VWAP, AROON, FK。
 
 ### 财务
 
@@ -941,7 +941,7 @@ uvicorn.run(app, host="0.0.0.0", port=8000)
 | `market-stat` | 全市场涨跌统计 |
 | `server-info` | 服务器交易时段 |
 | `symbol-info` | 个股特征快照 |
-| `indicator` | 技术指标计算（32 个：MACD/KDJ/RSI/BOLL/DMI/ATR...） |
+| `indicator` | 技术指标计算（34 个：MACD/KDJ/RSI/BOLL/DMI/ATR...） |
 | `indicator-list` | 列出可用技术指标 |
 | `backtest` | 回测引擎（加载策略文件，输出绩效报告） |
 | `portfolio` | 多标的组合回测（共享资金池，均等分配，汇总绩效） |
@@ -1060,7 +1060,7 @@ with MacClient.from_best_host() as c:
         print(info["name"], info["description"], info["outputs"])
 ```
 
-支持 31 个技术指标：
+支持 34 个技术指标：
 
 | 指标 | 输入 | 输出列 |
 |------|------|--------|
@@ -1094,6 +1094,10 @@ with MacClient.from_best_host() as c:
 | TAQ | high, low | TAQ_UP, TAQ_MID, TAQ_DOWN |
 | ZHUOYAO | close | ZY_LONG, ZY_MID, ZY_SHORT, ZY_TREND |
 | BIAS_SIGNAL | close | BS_X, BS_SMA, BS_LMA |
+| SAR | high, low | SAR（抛物线转向/动态止损位） |
+| VWAP | close, high, low, vol | VWAP（N日滚动成交量加权均价） |
+| AROON | high, low | AROON_UP, AROON_DOWN, AROON_OSC |
+| FK | close | FK（EMA(2) 突破斜率外推 EMA(42)） |
 
 #### 分时
 
@@ -1460,7 +1464,7 @@ src/easy_tdx/
 ├── client.py          # TdxClient / AsyncTdxClient（标准协议）
 ├── unified.py         # UnifiedTdxClient（统一入口）
 ├── config.py          # 服务器地址、端口、超时配置
-├── indicator.py       # 技术指标计算（32 个，基于 MyTT）
+├── indicator.py       # 技术指标计算（34 个，基于 MyTT）
 ├── MyTT.py            # 麦语言技术指标算法库
 ├── mac/
 │   ├── client.py      # MacClient / AsyncMacClient（MAC 协议）
@@ -1510,6 +1514,27 @@ ruff format --check src/ tests/                              # format check
 详见 [NOTICE](NOTICE) 和 [LICENSE](LICENSE)。
 
 ## Changelog
+
+### 1.12.0 (2026-06-14)
+
+**新增 4 个技术指标（30 → 34）** — 按"语义空白"补齐三类现有指标库缺失的维度：止损位、机构成本价、趋势启动时机。均为纯 numpy 实现，零新依赖。
+
+**新增指标**：
+- **SAR 抛物线转向**（`high, low` → `SAR`）：基于 Wilder 加速因子的动态止损位，填补 32 个指标里"止损位"语义的空白。可直接喂给 `BacktestEngine` 做动态 `stop_loss`。实现含反转检测、AF 加速/封顶、SAR 不穿越前两根 K 线极值的限制。
+- **VWAP 成交量加权均价**（`close, high, low, vol` → `VWAP`）：N 日滚动机构基准成本价，填补"机构成本"维度空白。用典型价格 `(H+L+C)/3` 加权，含除零保护（零成交量返回 nan）。
+- **AROON 阿隆指标**（`high, low` → `AROON_UP, AROON_DOWN, AROON_OSC`）：用"N 周期内新高/新低距今多少根"识别趋势启动时机，与现有 DMI（判断趋势强度但滞后）互补而非冗余。
+- **FK 趋势指标**（`close` → `FK`）：清理孤儿函数——`MyTT.FK` 此前已实现但未在 `indicator.py` 注册，用户通过 CLI/API 无法调用。现正式注册暴露。语义为 EMA(2) 是否突破斜率外推 EMA(42)，本质是动量偏离检测。
+
+**架构**：所有新指标沿用现有 `IndicatorSpec` 注册模式，`compute_indicators()` / `get_stock_kline_with_indicators()` / CLI `easy-tdx indicator` 自动可用，无需改动调度层。
+
+**除零与边界保护**：
+- SAR：一字板/停牌（高低价相同）不崩溃、不产生 inf；空输入返回空数组
+- VWAP：零成交量返回 nan（不产生 inf）；前 N-1 根为 nan（rolling 窗口）
+- AROON：输出严格落在 [0, 100] 区间
+
+**类型存根**：`MyTT.pyi` 同步补充 SAR/VWAP/AROON/FK 四个函数签名，mypy strict 零错误。
+
+**测试**：新增 `tests/unit/test_mytt.py`，22 个用例覆盖三个新指标 + FK 的数值正确性、单边行情行为、除零/空输入边界。注册层端到端覆盖复用 `test_indicator.py::test_all_registered_indicators_run`。
 
 ### 1.11.6 (2026-06-13)
 
