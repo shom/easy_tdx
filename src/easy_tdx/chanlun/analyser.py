@@ -99,6 +99,8 @@ class ChanlunResult:
                     "gg": round(zs.gg, 2),
                     "dd": round(zs.dd, 2),
                     "line_count": zs.line_count,
+                    "start_date": zs.start.k.date.strftime("%Y-%m-%d") if zs.start else None,
+                    "end_date": zs.end.k.date.strftime("%Y-%m-%d") if zs.end else None,
                     "done": zs.done,
                 }
                 for zs in self.zss
@@ -117,6 +119,7 @@ class ChanlunResult:
             "mmds": [
                 {
                     "type": mmd.mmd_type.value,
+                    "date": mmd.bi.end.k.date.strftime("%Y-%m-%d") if mmd.bi else None,
                     "msg": mmd.msg,
                 }
                 for mmd in self.mmds
@@ -125,6 +128,8 @@ class ChanlunResult:
                 {
                     "type": bc.bc_type.value,
                     "bc": bc.bc,
+                    "curr_date": bc.curr.end.k.date.strftime("%Y-%m-%d") if bc.curr else None,
+                    "prev_date": bc.prev.end.k.date.strftime("%Y-%m-%d") if bc.prev else None,
                     "msg": bc.msg,
                 }
                 for bc in self.bcs

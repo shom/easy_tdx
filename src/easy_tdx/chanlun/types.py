@@ -183,6 +183,7 @@ class MMD:
 
     mmd_type: MMDType
     zs: ZS | None = None
+    bi: BI | None = None  # 触发该买卖点的笔（用于可视化锚定日期）
     msg: str = ""
 
     def __str__(self) -> str:
@@ -204,6 +205,8 @@ class BC:
     bc_type: BCType
     bc: bool = False  # 是否背驰
     zs: ZS | None = None
+    curr: BI | XD | None = None  # 当前背驰笔/线段（用于可视化锚定日期）
+    prev: BI | XD | None = None  # 前一同向笔/线段（力度对照基准）
     msg: str = ""
 
     def __str__(self) -> str:

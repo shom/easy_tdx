@@ -68,6 +68,7 @@ def _check_buy_point(bi: BI, zs: ZS, all_bis: list[BI]) -> MMD | None:
             return MMD(
                 mmd_type=MMDType.BUY_1,
                 zs=zs,
+                bi=bi,
                 msg=f"中枢下方力度衰减，一类买点 (l={bi.low:.2f} < zd={zs.zd:.2f})",
             )
 
@@ -82,6 +83,7 @@ def _check_buy_point(bi: BI, zs: ZS, all_bis: list[BI]) -> MMD | None:
                     return MMD(
                         mmd_type=MMDType.BUY_2,
                         zs=zs,
+                        bi=bi,
                         msg=f"回调不创新低，二类买点 (l={bi.low:.2f})",
                     )
 
@@ -90,6 +92,7 @@ def _check_buy_point(bi: BI, zs: ZS, all_bis: list[BI]) -> MMD | None:
         return MMD(
             mmd_type=MMDType.BUY_3,
             zs=zs,
+            bi=bi,
             msg=f"回调不破中枢上沿，三类买点 (l={bi.low:.2f} > zg={zs.zg:.2f})",
         )
 
@@ -104,6 +107,7 @@ def _check_sell_point(bi: BI, zs: ZS, all_bis: list[BI]) -> MMD | None:
             return MMD(
                 mmd_type=MMDType.SELL_1,
                 zs=zs,
+                bi=bi,
                 msg=f"中枢上方力度衰减，一类卖点 (h={bi.high:.2f} > zg={zs.zg:.2f})",
             )
 
@@ -117,6 +121,7 @@ def _check_sell_point(bi: BI, zs: ZS, all_bis: list[BI]) -> MMD | None:
                     return MMD(
                         mmd_type=MMDType.SELL_2,
                         zs=zs,
+                        bi=bi,
                         msg=f"反弹不创新高，二类卖点 (h={bi.high:.2f})",
                     )
 
@@ -125,6 +130,7 @@ def _check_sell_point(bi: BI, zs: ZS, all_bis: list[BI]) -> MMD | None:
         return MMD(
             mmd_type=MMDType.SELL_3,
             zs=zs,
+            bi=bi,
             msg=f"反弹不破中枢下沿，三类卖点 (h={bi.high:.2f} < zd={zs.zd:.2f})",
         )
 

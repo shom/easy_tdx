@@ -1618,6 +1618,18 @@ ruff format --check src/ tests/                              # format check
 
 ## Changelog
 
+### 1.14.2 (2026-06-16)
+
+**缠论结果可视化字段增强** — 响应 [Discussion #2](https://github.com/handsomejustin/easy-tdx/discussions/2)，为缠论分析 JSON 输出（`ChanlunResult.to_dict()`）中的中枢 / 买卖点 / 背驰补上对应 K 线日期，方便前端/可视化工具直接用来标点画图。纯增量、向后兼容，不破坏任何已有 JSON 字段。
+
+新增字段：
+
+- **中枢 `zss`**：输出起始笔与结束笔的日期 `start_date` / `end_date`（第一笔起点 → 最后一笔终点）。
+- **买卖点 `mmds`**：输出触发该买卖点的笔确认日期 `date`（买卖点确立时刻的 K 线日期）。
+- **背驰 `bcs`**：输出背驰对照两笔的日期 `curr_date`（当前背驰笔）/ `prev_date`（对照基准笔）。
+
+日期统一采用 `YYYY-MM-DD` 格式（与已有 `bis` / `xds` 输出一致），全部字段对 `None` 做了兜底。三层接入（Python API / CLI `easy-tdx chanlun` / Web `/chanlun/analyze`）同步生效，Web 接口直接返回新字段无需改动。
+
 ### 1.14.1 (2026-06-15)
 
 **高级回测 ExecutionModel 路径 3 个真实数据兼容 Bug 修复** — 实测 `601088` 高级回测（方根滑点 + TWAP）暴露：权益曲线恒定、收益归零。根因为 ExecutionModel 路径与真实行情数据的格式/列名/类型脱节。

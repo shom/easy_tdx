@@ -75,6 +75,8 @@ def _check_bi_level_beichi(bis: list[BI]) -> list[BC]:
                             bc_type=BCType.BI,
                             bc=True,
                             zs=None,
+                            curr=curr,
+                            prev=prev,
                             msg=(
                                 f"笔背驰: 笔[{curr.index}] 力度={curr_force:.2f} "
                                 f"< 笔[{prev.index}] 力度={prev_force:.2f}"
@@ -108,6 +110,8 @@ def _check_pz_beichi(bis: list[BI], zss: list[ZS]) -> list[BC]:
                         bc_type=BCType.PZ,
                         bc=True,
                         zs=zs,
+                        curr=last_bi,
+                        prev=first_bi,
                         msg=(
                             f"盘整背驰: 中枢[{zs.index}] 内末笔力度={last_force:.2f} "
                             f"< 首笔力度={first_force:.2f}"
@@ -138,6 +142,8 @@ def _check_qs_beichi(bis: list[BI], zss: list[ZS]) -> list[BC]:
                         bc_type=BCType.QS,
                         bc=True,
                         zs=curr_zs,
+                        curr=curr_zs.lines[-1],
+                        prev=prev_zs.lines[-1],
                         msg=(
                             f"趋势背驰(下): 中枢[{curr_zs.index}] 离开力度={curr_exit_force:.2f} "
                             f"< 中枢[{prev_zs.index}] 离开力度={prev_exit_force:.2f}"
@@ -155,6 +161,8 @@ def _check_qs_beichi(bis: list[BI], zss: list[ZS]) -> list[BC]:
                         bc_type=BCType.QS,
                         bc=True,
                         zs=curr_zs,
+                        curr=curr_zs.lines[-1],
+                        prev=prev_zs.lines[-1],
                         msg=(
                             f"趋势背驰(上): 中枢[{curr_zs.index}] 离开力度={curr_exit_force:.2f} "
                             f"< 中枢[{prev_zs.index}] 离开力度={prev_exit_force:.2f}"

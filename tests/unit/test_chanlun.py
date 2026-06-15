@@ -549,3 +549,82 @@ class TestChanlunAnalyser:
         assert "zs_count" in d
         assert "bis" in d
         assert "zss" in d
+
+        # 可视化字段：中枢/买卖点/背驰应携带对应 K 线日期（若该样本产出了它们）
+        import re
+
+        date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+        for zs in d["zss"]:
+            assert "start_date" in zs
+            assert "end_date" in zs
+            if zs["start_date"] is not None:
+                assert date_re.match(zs["start_date"])
+            if zs["end_date"] is not None:
+                assert date_re.match(zs["end_date"])
+
+        for mmd in d["mmds"]:
+            assert "date" in mmd
+            if mmd["date"] is not None:
+                assert date_re.match(mmd["date"])
+
+        for bc in d["bcs"]:
+            assert "curr_date" in bc
+            assert "prev_date" in bc
+            if bc["curr_date"] is not None:
+                assert date_re.match(bc["curr_date"])
+            if bc["prev_date"] is not None:
+                assert date_re.match(bc["prev_date"])
+
+    def test_result_to_dict_with_visual_dates(self) -> None:
+        """可视化字段：足够数据下 zss/mmds/bcs 应携带合法 K 线日期。
+
+        用一段振荡+趋势的数据，确保能确定性产出中枢/买卖点/背驰，
+        从而真正覆盖 to_dict() 的日期输出分支。
+        """
+        import math
+        import re
+
+        import pandas as pd
+
+        from easy_tdx.chanlun.analyser import ChanlunAnalyser
+
+        dates = pd.date_range("2025-01-02", periods=40, freq="B")
+        highs = [15 + 5 * math.sin(i / 2) + i * 0.2 for i in range(40)]
+        lows = [highs[i] - 4 for i in range(40)]
+        df = pd.DataFrame(
+            {
+                "datetime": dates,
+                "open": [h - 2 for h in highs],
+                "close": [h - 1 for h in highs],
+                "high": highs,
+                "low": lows,
+                "vol": [1000] * 40,
+            }
+        )
+        analyser = ChanlunAnalyser(code="SZ000001")
+        d = analyser.process_klines(df).to_dict()
+
+        date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+        # 中枢必须有起止日期
+        assert len(d["zss"]) > 0
+        for zs in d["zss"]:
+            assert zs["start_date"] is not None
+            assert zs["end_date"] is not None
+            assert date_re.match(zs["start_date"])
+            assert date_re.match(zs["end_date"])
+
+        # 买卖点必须有触发日期
+        assert len(d["mmds"]) > 0
+        for mmd in d["mmds"]:
+            assert mmd["date"] is not None
+            assert date_re.match(mmd["date"])
+
+        # 背驰必须有当前笔 + 对照笔日期
+        assert len(d["bcs"]) > 0
+        for bc in d["bcs"]:
+            assert bc["curr_date"] is not None
+            assert bc["prev_date"] is not None
+            assert date_re.match(bc["curr_date"])
+            assert date_re.match(bc["prev_date"])
