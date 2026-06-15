@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,14 @@ from easy_tdx.backtest.types import Trade
 if TYPE_CHECKING:
     from easy_tdx.backtest.slippage import SlippageModel
     from easy_tdx.backtest.types import Signal
+
+
+def _volume_series(df: pd.DataFrame) -> pd.Series | None:
+    """取成交量序列，兼容真实行情的 ``vol`` 列与旧约定/测试的 ``volume`` 列。"""
+    for col in ("vol", "volume"):
+        if col in df.columns:
+            return df[col]
+    return None
 
 
 class ExecutionModel(ABC):
@@ -61,7 +69,8 @@ class ExecutionModel(ABC):
         """计算滑点。"""
         if slippage_model is None:
             return 0.0
-        volume = float(df["volume"].iloc[-1]) if "volume" in df.columns else 0.0
+        vol_series = _volume_series(df)
+        volume = float(vol_series.iloc[-1]) if vol_series is not None else 0.0
         volatility = self._estimate_volatility(df)
         return slippage_model.compute(
             price=price,
@@ -99,12 +108,15 @@ class ExecutionModel(ABC):
             return float(int(target_value / price / 100) * 100)
         return signal_size
 
-    def _get_datetime_int(self, df: pd.DataFrame, idx: int) -> int:
-        """获取指定 index 的 datetime int。"""
-        dt_raw = df["datetime"].iloc[idx]
-        if hasattr(dt_raw, "strftime"):
-            return int(dt_raw.strftime("%Y%m%d"))
-        return int(dt_raw)
+    def _get_datetime(self, df: pd.DataFrame, idx: int) -> Any:
+        """获取指定 index 的 datetime 原始值。
+
+        返回与 ``df["datetime"]`` 列一致的值（Timestamp 或 int），与
+        ``OrderSimulator`` 保持一致 —— ``PortfolioTracker.apply_trades`` 用
+        ``df["datetime"]`` 作为字典 key 查找 ``trade.datetime``，两者类型必须
+        相同，否则交易会被静默跳过（权益曲线恒定、收益归零）。
+        """
+        return df["datetime"].iloc[idx]
 
 
 class ImmediateExecution(ExecutionModel):
@@ -150,7 +162,7 @@ class ImmediateExecution(ExecutionModel):
             slip = self._calc_slippage(size, price, False, slippage_model, df)
             return [
                 Trade(
-                    datetime=self._get_datetime_int(df, exec_idx),
+                    datetime=self._get_datetime(df, exec_idx),
                     direction="BUY",
                     size=size,
                     price=price,
@@ -175,7 +187,7 @@ class ImmediateExecution(ExecutionModel):
             slip = self._calc_slippage(size, price, True, slippage_model, df)
             return [
                 Trade(
-                    datetime=self._get_datetime_int(df, exec_idx),
+                    datetime=self._get_datetime(df, exec_idx),
                     direction="SELL",
                     size=size,
                     price=price,
@@ -283,7 +295,7 @@ class TWAPExecution(ExecutionModel):
             slip = self._calc_slippage(actual_size, price, False, slippage_model, df)
             trades.append(
                 Trade(
-                    datetime=self._get_datetime_int(df, exec_idx),
+                    datetime=self._get_datetime(df, exec_idx),
                     direction="BUY",
                     size=float(actual_size),
                     price=price,
@@ -334,7 +346,7 @@ class TWAPExecution(ExecutionModel):
             slip = self._calc_slippage(actual_size, price, True, slippage_model, df)
             trades.append(
                 Trade(
-                    datetime=self._get_datetime_int(df, exec_idx),
+                    datetime=self._get_datetime(df, exec_idx),
                     direction="SELL",
                     size=float(actual_size),
                     price=price,
@@ -395,10 +407,11 @@ class VWAPExecution(ExecutionModel):
         """获取成交量权重分布。"""
         start = max(0, bar_idx - self._volume_lookback + 1)
         lookback = df.iloc[start : bar_idx + 1]
-        if "volume" not in lookback.columns or len(lookback) == 0:
+        vol_series = _volume_series(lookback)
+        if vol_series is None or len(lookback) == 0:
             return [1.0 / self._n_bars] * self._n_bars
 
-        volumes = lookback["volume"].to_numpy()
+        volumes = vol_series.to_numpy()
         total_vol = float(volumes.sum())
         if total_vol <= 0:
             return [1.0 / self._n_bars] * self._n_bars
@@ -462,7 +475,7 @@ class VWAPExecution(ExecutionModel):
             slip = self._calc_slippage(actual_size, price, False, slippage_model, df)
             trades.append(
                 Trade(
-                    datetime=self._get_datetime_int(df, exec_idx),
+                    datetime=self._get_datetime(df, exec_idx),
                     direction="BUY",
                     size=float(actual_size),
                     price=price,
@@ -512,7 +525,7 @@ class VWAPExecution(ExecutionModel):
             slip = self._calc_slippage(actual_size, price, True, slippage_model, df)
             trades.append(
                 Trade(
-                    datetime=self._get_datetime_int(df, exec_idx),
+                    datetime=self._get_datetime(df, exec_idx),
                     direction="SELL",
                     size=float(actual_size),
                     price=price,
@@ -624,7 +637,7 @@ class LimitExecution(ExecutionModel):
 
                 return [
                     Trade(
-                        datetime=self._get_datetime_int(df, exec_idx),
+                        datetime=self._get_datetime(df, exec_idx),
                         direction=signal.direction,
                         size=float(size),
                         price=target_price,

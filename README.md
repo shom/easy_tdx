@@ -1618,6 +1618,20 @@ ruff format --check src/ tests/                              # format check
 
 ## Changelog
 
+### 1.14.1 (2026-06-15)
+
+**高级回测 ExecutionModel 路径 3 个真实数据兼容 Bug 修复** — 实测 `601088` 高级回测（方根滑点 + TWAP）暴露：权益曲线恒定、收益归零。根因为 ExecutionModel 路径与真实行情数据的格式/列名/类型脱节。
+
+Bug 修复：
+
+- **datetime 类型分歧（致命）**：`ExecutionModel` 把 `Trade.datetime` 转成 `int(YYYYMMDD)`，而 `PortfolioTracker` 用 df 原始 `Timestamp` 作为 `trade_map` 字典 key，导致 TWAP/VWAP/Limit 路径的交易**全部静默丢失**、权益曲线恒定、收益恒为 0%。修复：`Trade.datetime` 改用 df 原始值，与 `OrderSimulator` 一致。
+- **volume 列名分歧**：`execution.py`/`orders.py` 仅认 `"volume"` 列，但真实行情（`get_security_bars`）列为 `"vol"`，导致滑点模型 volume 恒为 0、`SquareRootSlippage` 退化百分比模式、VWAP 退化为等权。修复：兼容 `vol`/`volume` 列名。
+- **date/datetime 列名分歧**：日线 `get_security_bars` 返回 `date` 列，但 `BacktestEngine` 硬性要求 `datetime` 列，按文档直接跑日线回测会 `ValueError`。修复：`BacktestEngine.run` 入口缺 `datetime` 时由 `date` 派生，下游无感兼容。
+
+为何此前未发现：`test_engine_with_twap` 仅断言「生成了交易」，未断言「交易实际影响了组合」；execution 单测用 int datetime 掩盖了类型分歧。本次新增 3 个回归测试编码「权益曲线随交易变化」「vol 列可读」「date 列可跑」契约，均经红灯验证（修复前精确失败）。
+
+验证：全部 650 单测通过，backtest 模块 ruff + mypy strict 清洁，`examples/22_backtest_advanced/backtest_601088_advanced.py` 实测权益曲线不再恒定、高级档收益从假的 0% 修正为真实的 -3.57%。
+
 ### 1.14.0 (2026-06-15)
 
 **新增新浪财报三表** — 三层接入（编程 API / CLI / Web API），独立数据源，无需连接 TDX 行情服务器。

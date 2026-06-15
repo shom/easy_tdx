@@ -7,8 +7,8 @@ import pandas as pd
 
 from easy_tdx import MyTT
 from easy_tdx.backtest.engine import BacktestEngine
-from easy_tdx.backtest.execution import TWAPExecution
-from easy_tdx.backtest.slippage import FixedSlippage
+from easy_tdx.backtest.execution import TWAPExecution, VWAPExecution
+from easy_tdx.backtest.slippage import FixedSlippage, SquareRootSlippage
 from easy_tdx.backtest.strategy import Strategy
 
 
@@ -609,6 +609,63 @@ class TestEngineExecutionModel:
         buy_trades = result.trades[result.trades["direction"] == "BUY"]
         assert len(buy_trades) >= 1
 
+    def test_execution_model_affects_equity(self) -> None:
+        """ExecutionModel 路径的交易必须真正进入 PortfolioTracker。
+
+        回归 datetime 类型分歧 bug：ExecutionModel 曾把 Trade.datetime 转成
+        int(YYYYMMDD)，而 PortfolioTracker 用 df 原始 Timestamp 作为 trade_map
+        的 key，导致 ExecutionModel 路径（TWAP/VWAP/Limit）的交易全部被静默
+        跳过、权益曲线恒定、收益归零。
+        """
+
+        class BuyAndHold(Strategy):
+            def init(self) -> None:
+                pass
+
+            def next(self) -> None:
+                if self._bar_index == 0:
+                    self.buy(size=0)  # 全仓
+
+        df = _make_df(30)  # Timestamp datetime（真实行情场景）
+        engine = BacktestEngine(
+            BuyAndHold,
+            cash=100000,
+            execution_model=TWAPExecution(n_bars=3),
+        )
+        result = engine.run(df)
+
+        # 交易必须影响持仓与权益曲线（不能全程空仓 / 恒定）
+        assert result.positions["size"].max() > 0
+        assert result.equity_curve["total"].nunique() > 1
+
+    def test_execution_model_with_vol_column(self) -> None:
+        """真实行情数据使用 vol 列名，VWAP/方根滑点应能读到成交量。
+
+        回归 volume 列名分歧 bug：回测代码曾只认 "volume"，真实数据列为
+        "vol"，导致滑点模型 volume 恒为 0、退化到百分比模式，VWAP 退化为等权。
+        """
+
+        class BuyOnce(Strategy):
+            def init(self) -> None:
+                pass
+
+            def next(self) -> None:
+                if self._bar_index == 0:
+                    self.buy(size=0)
+
+        df = _make_df(30).rename(columns={"volume": "vol"})
+        engine = BacktestEngine(
+            BuyOnce,
+            cash=100000,
+            execution_model=VWAPExecution(n_bars=3),
+            slippage_model=SquareRootSlippage(),
+        )
+        result = engine.run(df)
+        buy = result.trades[result.trades["direction"] == "BUY"]
+        assert len(buy) > 0
+        # volume 读到非 0 → 方根冲击未退化 → 滑点 > 0
+        assert (buy["slippage"] > 0).all()
+
     def test_engine_backward_compatible(self) -> None:
         """No new params: behavior unchanged."""
 
@@ -624,3 +681,25 @@ class TestEngineExecutionModel:
         engine = BacktestEngine(SimpleBuy, cash=100000)
         result = engine.run(df)
         assert len(result.trades) >= 1
+
+    def test_engine_accepts_date_column(self) -> None:
+        """引擎应直接接受真实行情日线的 date 列（而非 datetime）。
+
+        get_security_bars 日线返回 date 列，引擎在 run() 入口由 date 派生
+        datetime，下游无感兼容。回归此前用户必须手动重命名才能跑日线回测的问题。
+        """
+
+        class SimpleBuy(Strategy):
+            def init(self) -> None:
+                pass
+
+            def next(self) -> None:
+                if self._bar_index == 0:
+                    self.buy(size=0)
+
+        # 仅 date 列、无 datetime 列 —— 模拟 get_security_bars 日线输出
+        df = _make_df(30).rename(columns={"datetime": "date", "volume": "vol"})
+
+        engine = BacktestEngine(SimpleBuy, cash=100000)
+        result = engine.run(df)
+        assert result.positions["size"].max() > 0

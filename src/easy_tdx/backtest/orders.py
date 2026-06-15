@@ -312,9 +312,12 @@ class OrderSimulator:
         return size * self.slippage
 
     def _get_current_volume(self) -> float:
-        """获取最后一根K线的成交量。"""
-        if "volume" in self.df.columns and len(self.df) > 0:
-            return float(self.df["volume"].iloc[-1])
+        """获取最后一根K线的成交量，兼容 vol/volume 列名。"""
+        if len(self.df) == 0:
+            return 0.0
+        for col in ("vol", "volume"):
+            if col in self.df.columns:
+                return float(self.df[col].iloc[-1])
         return 0.0
 
     def _estimate_volatility(self) -> float:

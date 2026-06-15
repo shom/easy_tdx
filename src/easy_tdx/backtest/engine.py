@@ -114,6 +114,13 @@ class BacktestEngine:
         if len(df) == 0:
             return self._empty_result()
 
+        # 兼容真实行情日线数据：get_security_bars 日线返回 date 列，引擎内部
+        # （StrategyDataProxy / PortfolioTracker / _find_bar_index）统一使用
+        # datetime 列。缺则由 date 派生，避免上层手动重命名。
+        if "datetime" not in df.columns and "date" in df.columns:
+            df = df.copy()
+            df["datetime"] = df["date"]
+
         # Auto-compute chanlun if chanlun_level is set and no manual result
         if chanlun_result is None and self._chanlun_level is not None:
             from easy_tdx.chanlun.analyser import ChanlunAnalyser
