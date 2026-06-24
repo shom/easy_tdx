@@ -681,9 +681,7 @@ class TestStrengthRankerInit:
         from easy_tdx.screen.strength import StrengthRanker
 
         with patch("easy_tdx.screen.strength.resolve_vipdoc", return_value=Path("/fake")):
-            ranker = StrengthRanker(
-                preset="steady", w5=0.5, w20=0.3, w60=0.2, vol_adjusted=False
-            )
+            ranker = StrengthRanker(preset="steady", w5=0.5, w20=0.3, w60=0.2, vol_adjusted=False)
         assert ranker._w5 == 0.5
         assert ranker._w20 == 0.3
         assert ranker._w60 == 0.2
@@ -695,4 +693,3 @@ class TestStrengthRankerInit:
         with patch("easy_tdx.screen.strength.resolve_vipdoc", return_value=Path("/fake")):
             ranker = StrengthRanker(preset="breakout")
         assert ranker.preset == "breakout"
-

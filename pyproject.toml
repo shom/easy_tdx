@@ -23,7 +23,9 @@ packages = ["src/easy_tdx"]
 
 [tool.mypy]
 strict = true
-python_version = "3.10"
+python_version = "3.12"
+# 跳过未跟踪的本地脚本（依赖外部 unified_config/sqlalchemy/requests，不属于库）
+exclude = ["src/easy_tdx/exchange_margin\\.py"]
 
 [[tool.mypy.overrides]]
 module = ["pandas", "tabulate", "matplotlib", "matplotlib.*"]
@@ -44,7 +46,7 @@ ignore_missing_imports = true
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-extend-exclude = ["*.pyi"]
+extend-exclude = ["*.pyi", "src/easy_tdx/exchange_margin.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]

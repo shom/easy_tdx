@@ -145,9 +145,7 @@ async def market_strength(
     # 注：在协程内用 get_running_loop() 而非 get_event_loop()，
     # 后者在 Python 3.12+ 已弃用。
     loop = asyncio.get_running_loop()
-    results = await loop.run_in_executor(
-        None, lambda: ranker.rank(universe=universe, top_n=top_n)
-    )
+    results = await loop.run_in_executor(None, lambda: ranker.rank(universe=universe, top_n=top_n))
 
     records = [
         {
