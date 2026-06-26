@@ -835,19 +835,20 @@ easy-tdx f10 000001 --type llb --table       # 平安现金流量表，表格输
 
 ### 通达信原生 F10 与最新财务快照
 
-走通达信协议（与 Web 层 ``/finance`` ``/company/*`` 端点同源），覆盖 ``f10``（新浪三表）之外的 F10 全文板块：
+走通达信协议（与 Web 层 ``/finance`` ``/company/*`` 端点同源），覆盖 ``f10``（新浪三表）之外的 F10 全文板块。完整示例见 [examples/06_finance/](./examples/06_finance/README.md)。
 
 ```bash
 easy-tdx finance-info SH 600519 --table                          # 最新财务快照（30+ 项单期指标）
 easy-tdx company-info SH 600519                                  # F10 板块目录（最新提示/公司概况/...）
-easy-tdx company-info-content SH 600519 "公司概况"               # 读板块正文，自动解析板块名→文件
-easy-tdx company-info-content SH 600519 "分红扩股" --length 2048  # 加长读取
-easy-tdx company-info-content SH 600519 600519.txt               # 也可直接传文件名
+easy-tdx company-info SH 600519 "公司概况"                        # 读板块正文，自动解析板块名→文件
+easy-tdx company-info SH 600519 "分红扩股" --length 2048          # 加长读取
+easy-tdx company-info SH 600519 600519.txt                       # 也可直接传文件名
 ```
 
 - ``finance-info``：最新一期财务快照，含股本结构、资产负债、利润、现金流、每股指标（37 字段）。与 ``f10`` 互补——前者是单期快照，后者是多期三表。
-- ``company-info``：列出该股 F10 的全部板块（最新提示、公司概况、财务分析、股东研究、股本结构、资本运作、业内点评、行业分析、公司大事、研究报告、经营分析、主力追踪、分红扩股、高层治理、龙虎榜单、关联个股）及其文件偏移。
-- ``company-info-content``：``name_or_filename`` 既可传板块名（自动定位到该板块起点读取），也可直接传文件名。``--offset`` / ``--length`` 控制读取范围（字节，默认 0/1024）。
+- ``company-info``：**一个命令两种用法**——无板块名参数列 F10 板块目录，有板块名参数读正文。目录含 16 个板块（最新提示、公司概况、财务分析、股东研究、股本结构、资本运作、业内点评、行业分析、公司大事、研究报告、经营分析、主力追踪、分红扩股、高层治理、龙虎榜单、关联个股）。
+- 读正文时 ``name_or_filename`` 既可传板块名（自动定位到该板块起点），也可传文件名；``--offset`` 语义随入参而定（板块名=板块内相对偏移，文件名=文件绝对偏移），``--length`` 控制读取字节数。
+
 
 ### 扩展市场（港股/美股/期货）
 
@@ -1087,8 +1088,7 @@ uvicorn.run(app, host="0.0.0.0", port=8000)
 | `serve` | 启动 Web API 服务器（REST + WebSocket，需 `easy-tdx[web]`） |
 | `f10` | 财报三表（新浪：利润表/资产负债表/现金流量表） |
 | `finance-info` | 最新财务快照（通达信协议，30+ 项单期指标） |
-| `company-info` | F10 公司信息板块目录（通达信协议） |
-| `company-info-content` | F10 板块正文（板块名或文件名，GBK 文本） |
+| `company-info` | F10 公司信息（无板块名列目录 / 有板块名读正文） |
 | `fund-flow` | 历史资金流向 |
 | `ex kline` | 扩展市场 K 线 |
 | `ex quote` | 扩展市场报价 |

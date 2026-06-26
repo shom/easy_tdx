@@ -49,36 +49,50 @@ def finance_info(market: str, code: str, use_table: bool, output_fmt: str) -> No
 @click.command("company-info")
 @click.argument("market")
 @click.argument("code")
-@click.option("--table", "use_table", is_flag=True, help="表格输出")
+@click.argument("name_or_filename", required=False, default=None)
+@click.option("--table", "use_table", is_flag=True, help="表格输出（仅列目录时生效）")
 @click.option("--output", "output_fmt", type=click.Choice(["json", "table", "csv"]), default="json")
-def company_info(market: str, code: str, use_table: bool, output_fmt: str) -> None:
-    """获取 F10 公司信息板块目录。
-
-    返回各板块的名称（最新提示/公司概况/财务分析/持股情况/股本结构/
-    分红融资/高管信息/行业产品/新闻公告/回顾展望 等）、文件名及偏移长度。
-    拿到板块名后可用 ``company-info-content`` 读取正文。
+@click.option(
+    "--offset",
+    default=0,
+    type=int,
+    help="读正文偏移（字节）：传板块名时为板块内相对偏移，传文件名时为文件绝对偏移，默认 0",
+)
+@click.option("--length", default=1024, type=int, help="读正文长度（字节，默认 1024）")
+def company_info(
+    market: str,
+    code: str,
+    name_or_filename: str | None,
+    use_table: bool,
+    output_fmt: str,
+    offset: int,
+    length: int,
+) -> None:
+    """获取 F10 公司信息：无板块名参数列目录，有板块名参数读正文。
 
     \b
-    示例：
+    两种用法：
 
+      # 1. 列出 F10 板块目录（最新提示/公司概况/财务分析/... 共 16 板块）
       easy-tdx company-info SH 600519 --table
+
+      # 2. 读取指定板块正文（板块名自动解析定位）
+      easy-tdx company-info SH 600519 "公司概况"
+      easy-tdx company-info SH 600519 "分红扩股" --length 2048
+
+    \b
+    读正文时，name_or_filename 既可传板块名（如 ``最新提示``），也可直接传文件名
+    （如 ``600519.txt``）。``--offset`` 语义随入参而定：传板块名时为板块内相对
+    偏移（0 = 板块起点）；传文件名时为文件绝对偏移。
     """
-    from ..exceptions import TdxError
-    from .conn import get_tdx_client
-    from .output import print_error, print_output
-
-    fmt = "table" if use_table else output_fmt
     mkt = Market(parse_market(market))
-    try:
-        with get_tdx_client() as client:
-            df = client.get_company_info_category(mkt, code)
-    except TdxError as e:
-        print_error(str(e))
-        raise SystemExit(1) from e
-    print_output(df, fmt)
+    if name_or_filename is None:
+        _run_category(mkt, code, use_table, output_fmt)
+    else:
+        _run_content(mkt, code, name_or_filename, offset, length)
 
 
-@click.command("company-info-content")
+@click.command("company-info-content", hidden=True)
 @click.argument("market")
 @click.argument("code")
 @click.argument("name_or_filename")
@@ -92,36 +106,56 @@ def company_info(market: str, code: str, use_table: bool, output_fmt: str) -> No
 def company_info_content(
     market: str, code: str, name_or_filename: str, offset: int, length: int
 ) -> None:
-    """读取 F10 公司信息板块正文（GBK 文本）。
+    """[已弃用，改用 company-info] 读取 F10 公司信息板块正文。
 
-    ``name_or_filename`` 既可传板块名（如 ``最新提示``，自动查目录解析），
-    也可直接传文件名（如 ``600519.txt``）。建议先用 ``company-info``
-    查看可用板块名。
+    此命令为向后兼容保留（隐藏，不出现在 --help）。新用法::
 
-    ``--offset`` 语义随入参而定：传板块名时为**板块内相对偏移**
-    （0 = 板块起点）；传文件名时为**文件绝对偏移**。
-
-    \b
-    示例：
-
-      easy-tdx company-info-content SH 600519 "最新提示"
-
-      easy-tdx company-info-content SH 600519 600519.txt --length 2048
+        easy-tdx company-info SH 600519 "公司概况"
     """
+    mkt = Market(parse_market(market))
+    _run_content(mkt, code, name_or_filename, offset, length)
+
+
+# --------------------------------------------------------------------------- #
+# 内部实现：列目录 / 读正文
+# --------------------------------------------------------------------------- #
+
+
+def _run_category(market: Market, code: str, use_table: bool, output_fmt: str) -> None:
+    """列出 F10 板块目录并输出。"""
+    from ..exceptions import TdxError
+    from .conn import get_tdx_client
+    from .output import print_error, print_output
+
+    fmt = "table" if use_table else output_fmt
+    try:
+        with get_tdx_client() as client:
+            df = client.get_company_info_category(market, code)
+    except TdxError as e:
+        print_error(str(e))
+        raise SystemExit(1) from e
+    print_output(df, fmt)
+
+
+def _run_content(
+    market: Market, code: str, name_or_filename: str, offset: int, length: int
+) -> None:
+    """读取 F10 板块正文并输出。"""
     from ..exceptions import TdxError
     from .conn import get_tdx_client
     from .output import print_error
 
-    mkt = Market(parse_market(market))
     try:
         with get_tdx_client() as client:
             filename, seg_start, matched_board = _resolve_filename(
-                client, mkt, code, name_or_filename
+                client, market, code, name_or_filename
             )
             # 板块名命中：--offset 解释为板块内相对偏移（默认 0 = 板块起点）
             # 文件名：--offset 解释为文件绝对偏移
             effective_offset = seg_start + offset if matched_board else offset
-            content = client.get_company_info_content(mkt, code, filename, effective_offset, length)
+            content = client.get_company_info_content(
+                market, code, filename, effective_offset, length
+            )
     except _ResolveError as e:
         print_error(str(e))
         raise SystemExit(1) from e

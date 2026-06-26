@@ -2,6 +2,24 @@
 
 本文件记录 easy-tdx 的版本变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)。
 
+## [1.15.2] — 2026-06-27
+
+### 变更
+
+- **`company-info` 命令合并** — 把 `company-info`（列目录）与 `company-info-content`（读正文）合并为一个命令，消除「列目录」和「读正文」两个相似命令名的混淆：
+  - 无板块名参数 → 列 F10 板块目录（原 `company-info`）
+  - 有板块名参数 → 读板块正文（原 `company-info-content`）
+  - `company-info-content` 保留为**隐藏别名**（`hidden=True`），向后兼容 v1.15.1 脚本，不出现在 `--help`。
+  - 示例：`easy-tdx company-info SH 600519 "公司概况"` 现在直接读正文（无需记忆用哪个命令）。
+
+### 新增
+
+- **examples/06_finance 文档完善** — 补全财务快照与 F10 公司信息的三种调用方式 demo：
+  - 新增 `README.md`：命令关系图、16 个 F10 板块完整列表、字段说明、三方式快速开始。
+  - 新增 `company_cli.sh`：CLI 命令 demo（finance-info / company-info 全用法、输出格式切换、错误处理）。
+  - 新增 `company_web_api.py`：Web API 调用 demo（`/finance` `/company/category` `/company/content`）。
+  - 更新 `company_info.py` 板块名列表为实测的 16 板块（分红扩股/高层治理/龙虎榜单等）。
+
 ## [1.15.1] — 2026-06-27
 
 ### 新增
