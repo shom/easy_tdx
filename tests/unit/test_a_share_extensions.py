@@ -112,14 +112,41 @@ def test_get_market_stat_mapping(_mock_conn_cls):
     def _zero_quote(code, **kw):
         """构造一只仅关键字段非零的 SecurityQuote，其余五档/活跃度字段取默认 0。"""
         base = dict(
-            price=0, pre_close=0, open=0, high=0, low=0,
-            vol=0, cur_vol=0, amount=0, s_vol=0, b_vol=0,
-            active1=0, active2=0,
-            bid1=0, bid_vol1=0, bid2=0, bid_vol2=0, bid3=0, bid_vol3=0,
-            bid4=0, bid_vol4=0, bid5=0, bid_vol5=0,
-            ask1=0, ask_vol1=0, ask2=0, ask_vol2=0, ask3=0, ask_vol3=0,
-            ask4=0, ask_vol4=0, ask5=0, ask_vol5=0,
-            rise_speed=0, limit_up=0, limit_down=0,
+            price=0,
+            pre_close=0,
+            open=0,
+            high=0,
+            low=0,
+            vol=0,
+            cur_vol=0,
+            amount=0,
+            s_vol=0,
+            b_vol=0,
+            active1=0,
+            active2=0,
+            bid1=0,
+            bid_vol1=0,
+            bid2=0,
+            bid_vol2=0,
+            bid3=0,
+            bid_vol3=0,
+            bid4=0,
+            bid_vol4=0,
+            bid5=0,
+            bid_vol5=0,
+            ask1=0,
+            ask_vol1=0,
+            ask2=0,
+            ask_vol2=0,
+            ask3=0,
+            ask_vol3=0,
+            ask4=0,
+            ask_vol4=0,
+            ask5=0,
+            ask_vol5=0,
+            rise_speed=0,
+            limit_up=0,
+            limit_down=0,
         )
         base.update(kw)
         return SecurityQuote(Market.SH, code, **base)
@@ -127,10 +154,10 @@ def test_get_market_stat_mapping(_mock_conn_cls):
     # 880005: 计数字段=真实家数/10；amount/vol 不缩放，原样透传
     q_stat = _zero_quote(
         "880005",
-        price=300.0,    # up   = 300 * 10 = 3000
-        open=200.0,     # down = 200 * 10 = 2000
-        high=550.0,     # total= 550 * 10 = 5500
-        low=50.0,       # neutral = 50 * 10 = 500
+        price=300.0,  # up   = 300 * 10 = 3000
+        open=200.0,  # down = 200 * 10 = 2000
+        high=550.0,  # total= 550 * 10 = 5500
+        low=50.0,  # neutral = 50 * 10 = 500
         vol=1000000.0,
         amount=50000000.0,
     )
@@ -139,8 +166,8 @@ def test_get_market_stat_mapping(_mock_conn_cls):
     # 880006: 涨跌停家数=真实/10
     q_limit = _zero_quote(
         "880006",
-        price=13.1,     # limit_up   = 131
-        open=0.6,       # limit_down = 6
+        price=13.1,  # limit_up   = 131
+        open=0.6,  # limit_down = 6
     )
 
     def mock_execute(cmd):
