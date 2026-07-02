@@ -1,0 +1,106 @@
+/* 全局深色金融主题。MVP-A 不引 UI 组件库，用 CSS 变量统一设计 token。 */
+
+:root {
+  --bg: #0f1117;
+  --bg-elevated: #1a1d26;
+  --bg-panel: #161922;
+  --border: #2a2e3a;
+  --text: #e6e8eb;
+  --text-muted: #8b919e;
+  --text-dim: #5c6370;
+  --accent: #4a9eff;
+  --up: #ef4146; /* A股惯例：红涨 */
+  --down: #18a058; /* 绿跌 */
+  --warn: #f0a020;
+  --radius: 6px;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei',
+    Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  transition: all 0.15s;
+}
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+button.primary:disabled {
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+}
+
+input,
+select,
+textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  width: 100%;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.row > * {
+  flex: 1;
+}
+
+a {
+  color: var(--accent);
+}
